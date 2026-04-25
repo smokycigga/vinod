@@ -1,0 +1,2632 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Professional CRM Dashboard 2024</title>
+    <link rel="stylesheet" href="/dashboard.css">
+    <script type="module" src="/vendor/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="/vendor/ionicons/ionicons.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <!-- Flatpickr (Custom DatePicker) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- SweetAlert2 (Custom Modals/Dialogs) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.5/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.5/dist/sweetalert2.all.min.js"></script>
+    <style>
+        .icon-sm {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+        }
+
+        .icon-md {
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+        }
+
+        .icon-lg {
+            font-size: 24px;
+            width: 24px;
+            height: 24px;
+        }
+
+        .icon-xl {
+            font-size: 32px;
+            width: 32px;
+            height: 32px;
+        }
+
+        ion-icon {
+            vertical-align: middle;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Sidebar Navigation -->
+
+
+        <nav class="sidebar-nav">
+            <a href="#" onclick="showSection('dashboard')" class="nav-item active" data-section="dashboard"
+                data-tooltip="Dashboard">
+                <ion-icon name="analytics-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            <a href="#" onclick="showSection('leads')" class="nav-item sales-only" data-section="leads"
+                data-tooltip="Leads">
+                <ion-icon name="people-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">Leads</span>
+            </a>
+            <a href="#" onclick="showSection('pipeline')" class="nav-item" data-section="pipeline"
+                data-tooltip="Pipeline">
+                <ion-icon name="funnel-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">Pipeline</span>
+            </a>
+            <a href="#" onclick="showSection('tasks')" class="nav-item" data-section="tasks" data-tooltip="Tasks">
+                <ion-icon name="checkbox-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">Tasks</span>
+            </a>
+            <a href="#" onclick="showSection('communication')" class="nav-item" data-section="communication"
+                data-tooltip="Communications">
+                <ion-icon name="chatbubble-ellipses-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">Communications</span>
+            </a>
+            <a href="#" onclick="showSection('analytics')" class="nav-item" data-section="analytics"
+                data-tooltip="Analytics">
+                <ion-icon name="stats-chart-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">Analytics</span>
+            </a>
+            <a href="#" onclick="showSection('users')" class="nav-item superadmin-admin-only" data-section="users"
+                data-tooltip="Users">
+                <ion-icon name="person-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">Users</span>
+            </a>
+            <a href="#" onclick="showSection('settings')" class="nav-item" data-section="settings"
+                data-tooltip="Settings">
+                <ion-icon name="settings-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">Settings</span>
+            </a>
+            <a href="#" onclick="showSection('activity-logs')" class="nav-item" data-section="activity-logs"
+                data-tooltip="Activity Logs">
+                <ion-icon name="time-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">Activity Logs</span>
+            </a>
+            <a href="#" onclick="showSection('import-export')" class="nav-item" data-section="import-export"
+                data-tooltip="Import/Export">
+                <ion-icon name="swap-horizontal-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">Import/Export</span>
+            </a>
+            <a href="#" onclick="showSection('invoices')" class="nav-item" data-section="invoices"
+                data-tooltip="Invoices">
+                <ion-icon name="document-text-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">Invoices</span>
+            </a>
+            <a href="#" onclick="showSection('clients')" class="nav-item exclude-client" data-section="clients"
+                data-tooltip="Clients">
+                <ion-icon name="briefcase-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">Clients</span>
+            </a>
+            <a href="#" onclick="showSection('agreements')" class="nav-item client-only" data-section="agreements"
+                data-tooltip="My Agreements" style="display: none;">
+                <ion-icon name="document-text-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">My Agreements</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn-logout" onclick="logout()">
+                <ion-icon name="log-out-outline" class="icon-md"></ion-icon>
+                <span class="nav-text">Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Sidebar overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- TOP NAVIGATION BAR -->
+    <nav class="top-nav">
+        <div class="top-nav-left">
+            <button id="sidebarToggle" class="mobile-nav-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar" title="Toggle sidebar">
+                <ion-icon name="menu-outline" class="icon-md"></ion-icon>
+            </button>
+            <div class="logo">
+                <ion-icon name="business" class="icon-lg"></ion-icon>
+                <span class="logo-text">CRM System</span>
+            </div>
+        </div>
+        <!-- Navigation links moved to side panel -->
+        <div class="top-nav-center"></div>
+        <div class="top-nav-right">
+            <div class="top-nav-search">
+                <ion-icon name="search-outline" class="icon-md"></ion-icon>
+                <input type="text" placeholder="Search leads, tasks..." id="globalSearch">
+            </div>
+            <button class="top-nav-btn" onclick="showNotifications()">
+                <ion-icon name="notifications-outline" class="icon-md"></ion-icon>
+                <span class="notification-badge" id="notificationBadge">3</span>
+            </button>
+            <div class="top-nav-profile" onclick="showSection('settings')">
+                <div class="top-nav-avatar"><ion-icon name="person-circle" class="icon-lg"></ion-icon></div>
+                <div class="top-nav-user-info">
+                    <div id="currentUserName" class="top-nav-user-name">Admin User</div>
+                    <div id="currentUserRole" class="top-nav-user-role">Admin</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content (NO sidebar margin since top nav is used) -->
+    <div class="main-content top-nav-layout">
+        <!-- old header hidden, title shown via greeting below -->
+
+        <!-- Dashboard Section -->
+        <section id="dashboard-section" class="content-section active">
+            <!-- Greeting Header -->
+            <div class="greeting-header">
+                <div class="greeting-text">
+                    <h1 id="greetingTitle">Good morning, <span id="greetingName">Samal</span>! <ion-icon
+                            name="sunny-outline" class="icon-sm" style="color:#f59e0b;"></ion-icon> Ready to crush
+                        today's goals?</h1>
+                    <p>Here's what's happening in your business right now.</p>
+                </div>
+                <button class="btn btn-primary" onclick="refreshDashboard()">
+                    <ion-icon name="refresh-outline" class="icon-sm"></ion-icon> Update
+                </button>
+            </div>
+
+            <!-- 3-Column Dashboard Grid -->
+            <div class="dash-three-col">
+                <!-- LEFT: Lead Analytics Chart Card -->
+                <div class="dash-card dash-card-chart">
+                    <div class="dash-card-header">
+                        <h3><ion-icon name="stats-chart-outline" class="icon-md"></ion-icon> Lead Analytics</h3>
+                        <div class="dash-card-actions">
+                            <select id="leadChartPeriod" class="chart-filter-select"
+                                onchange="updateLeadAnalyticsChart()">
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="year">This Year</option>
+                            </select>
+                            <button class="icon-btn" onclick="updateLeadAnalyticsChart()" title="Refresh Data">
+                                <ion-icon name="refresh-outline" class="icon-sm"></ion-icon>
+                            </button>
+                            <button class="icon-btn" onclick="exportLeadChart()" title="Export PNG">
+                                <ion-icon name="download-outline" class="icon-sm"></ion-icon>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="lead-chart-area">
+                        <div id="chartLoadingOverlay" class="chart-loading-overlay">
+                            <div class="spinner"></div>
+                        </div>
+                        <div id="chartEmptyState" class="chart-empty-state" style="display: none;">
+                            <ion-icon name="bar-chart-outline" class="icon-xl"></ion-icon>
+                            <p>No leads found for this period</p>
+                            <button class="btn btn-primary btn-sm" onclick="openAddLeadModal()">Add Your First
+                                Lead</button>
+                        </div>
+                        <canvas id="leadAnalyticsChart"></canvas>
+                    </div>
+                    <div class="chart-stats-row">
+                        <div class="chart-stat">
+                            <span class="chart-stat-val" id="totalLeads">0</span>
+                            <span class="chart-stat-lbl">Total Leads</span>
+                        </div>
+                        <div class="chart-stat">
+                            <span class="chart-stat-val trend-up" id="leadTrend">+0%</span>
+                            <span class="chart-stat-lbl">Trend</span>
+                        </div>
+                        <div class="chart-stat">
+                            <span class="chart-stat-val" id="bestDay">None</span>
+                            <span class="chart-stat-lbl">Best Day</span>
+                        </div>
+                        <div class="chart-stat">
+                            <span class="chart-stat-val" id="avgLeads">0</span>
+                            <span class="chart-stat-lbl">Avg/Day</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MIDDLE: 2x2 Pastel Metric Cards -->
+                <div class="dash-metrics-grid">
+                    <div class="metric-card metric-orange">
+                        <div class="metric-icon"><ion-icon name="people-outline" class="icon-xl"></ion-icon></div>
+                        <div class="metric-value" id="totalLeadsMetric">0</div>
+                        <div class="metric-label">Your Leads <span class="stat-hint">(let's grow this!)</span></div>
+                    </div>
+                    <div class="metric-card metric-green">
+                        <div class="metric-icon"><ion-icon name="checkmark-circle-outline" class="icon-xl"></ion-icon>
+                        </div>
+                        <div class="metric-value" id="closedDealsMetric">0</div>
+                        <div class="metric-label">Closed Deals <span class="stat-hint">(building momentum...)</span>
+                        </div>
+                    </div>
+                    <div class="metric-card metric-purple">
+                        <div class="metric-icon"><ion-icon name="time-outline" class="icon-xl"></ion-icon></div>
+                        <div class="metric-value" id="pendingTasks">0</div>
+                        <div class="metric-label">Pending Tasks</div>
+                    </div>
+                    <div class="metric-card metric-blue">
+                        <div class="metric-icon"><ion-icon name="pie-chart-outline" class="icon-xl"></ion-icon></div>
+                        <div class="metric-value" id="conversionRate">—</div>
+                        <div class="metric-label">Conversion</div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Quick Actions Card -->
+                <div class="dash-card dash-card-actions">
+                    <div class="dash-card-header">
+                        <h3><ion-icon name="flash-outline" class="icon-sm"></ion-icon> Quick Actions</h3>
+                    </div>
+                    <div class="quick-actions-list">
+                        <button class="quick-action-btn" onclick="openAddLeadModal()">
+                            <div class="qa-icon qa-blue"><ion-icon name="person-add-outline"></ion-icon></div>
+                            <span>Bring in a Lead &nbsp;<ion-icon name="sparkles-outline" style="font-size:12px;vertical-align:middle;color:#C9963A;"></ion-icon></span>
+                            <ion-icon name="chevron-forward-outline" class="qa-arrow"></ion-icon>
+                        </button>
+                        <button class="quick-action-btn" onclick="showSection('tasks')">
+                            <div class="qa-icon qa-orange"><ion-icon name="checkbox-outline"></ion-icon></div>
+                            <span>Create Task</span>
+                            <ion-icon name="chevron-forward-outline" class="qa-arrow"></ion-icon>
+                        </button>
+                        <button class="quick-action-btn" onclick="showSection('pipeline')">
+                            <div class="qa-icon qa-green"><ion-icon name="funnel-outline"></ion-icon></div>
+                            <span>View Pipeline</span>
+                            <ion-icon name="chevron-forward-outline" class="qa-arrow"></ion-icon>
+                        </button>
+                        <button class="quick-action-btn" onclick="showSection('analytics')">
+                            <div class="qa-icon qa-purple"><ion-icon name="stats-chart-outline"></ion-icon></div>
+                            <span>Reports</span>
+                            <ion-icon name="chevron-forward-outline" class="qa-arrow"></ion-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Section: Recent Activity & Tasks as unified table -->
+            <div class="dash-bottom-section">
+                <div class="dash-card dash-card-wide">
+                    <div class="dash-card-header">
+                        <h3><ion-icon name="time-outline" class="icon-sm"></ion-icon> Recent Activity <ion-icon
+                                name="sparkles-outline" class="icon-sm"></ion-icon></h3>
+                        <a href="#" class="view-all-link" onclick="showSection('activity-logs')">View all <ion-icon
+                                name="arrow-forward-outline" class="icon-sm"></ion-icon></a>
+                    </div>
+                    <div id="recentActivity" class="activity-list"></div>
+                </div>
+                <div class="dash-card dash-card-wide">
+                    <div class="dash-card-header">
+                        <h3><ion-icon name="calendar-outline" class="icon-sm"></ion-icon> Your Upcoming Tasks <ion-icon
+                                name="document-text-outline" class="icon-sm"></ion-icon></h3>
+                        <a href="#" class="view-all-link" onclick="showSection('tasks')">View all <ion-icon
+                                name="arrow-forward-outline" class="icon-sm"></ion-icon></a>
+                    </div>
+                    <div id="upcomingTasks" class="task-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Leads Section -->
+        <section id="leads-section" class="content-section">
+            <div class="section-header">
+                <h2>Potential Customers</h2>
+                <div class="section-actions">
+                    <button class="btn btn-primary" onclick="openAddLeadModal()">
+                        <ion-icon name="add-outline" class="icon-sm"></ion-icon> Add a Lead
+                    </button>
+                </div>
+            </div>
+
+            <div class="task-filters" id="leadsAssignedFilterBar">
+                <button class="filter-btn active" onclick="filterLeadsByAssignment('all')">All</button>
+                <button class="filter-btn" onclick="filterLeadsByAssignment('assigned')">Assigned</button>
+                <button class="filter-btn" onclick="filterLeadsByAssignment('not-assigned')">Not Assigned</button>
+            </div>
+
+            <div class="table-container">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>Company Name</th>
+                            <th>Contact Person</th>
+                            <th>Designation</th>
+                            <th>Email</th>
+                            <th>Mobile</th>
+                            <th>Assigned To</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadsTableBody"></tbody>
+                </table>
+                <div id="leadsEmptyState" class="empty-state"
+                    style="display: none; padding: 40px; text-align: center; color: #64748B;">
+                    <ion-icon name="people-outline"
+                        style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;"></ion-icon>
+                    <p>No potential customers found matching your criteria</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Clients Section -->
+        <section id="clients-section" class="content-section">
+            <div class="section-header">
+                <h2>Clients</h2>
+                <div class="section-actions">
+                    <span id="clientsCount" style="font-size:13px;color:var(--gray-500);margin-right:12px;"></span>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>Company Name</th>
+                            <th>Contact Person</th>
+                            <th>Designation</th>
+                            <th>Email</th>
+                            <th>Mobile</th>
+                            <th>Assigned To</th>
+                            <th>Status Details</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientsTableBody"></tbody>
+                </table>
+                <div id="clientsEmptyState" class="empty-state"
+                    style="display: none; padding: 40px; text-align: center; color: #64748B;">
+                    <ion-icon name="briefcase-outline"
+                        style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;"></ion-icon>
+                    <p>No clients yet. Leads marked as <strong>Won</strong> or <strong>Agreement Signed</strong> (with agreement uploaded) will appear here.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Agreements Section (Client Only) -->
+        <section id="agreements-section" class="content-section">
+            <div class="section-header">
+                <h2>My Agreements</h2>
+            </div>
+            <div class="table-container">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice Number</th>
+                            <th>Date</th>
+                            <th>Agreement File</th>
+                            <th>Download</th>
+                        </tr>
+                    </thead>
+                    <tbody id="agreementsTableBody"></tbody>
+                </table>
+                <div id="agreementsEmptyState" class="empty-state"
+                    style="display: none; padding: 40px; text-align: center; color: #64748B;">
+                    <ion-icon name="document-text-outline" style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;"></ion-icon>
+                    <p>No agreements found for your account.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pipeline Section -->
+        <section id="pipeline-section" class="content-section">
+            <div class="section-header">
+                <h2>Pipeline</h2>
+                <button class="btn btn-secondary" onclick="openPipelineSettings()">
+                    <ion-icon name="settings-outline" class="icon-sm"></ion-icon> Manage Pipeline
+                </button>
+            </div>
+            <div class="pipeline-kanban" id="pipelineKanban"></div>
+        </section>
+
+        <!-- Tasks Section -->
+        <section id="tasks-section" class="content-section">
+            <div class="section-header">
+                <h2>Tasks & Reminders</h2>
+                <button class="btn btn-primary" onclick="openAddTaskModal()">
+                    <ion-icon name="add-outline" class="icon-sm"></ion-icon> Add Task
+                </button>
+            </div>
+
+            <div class="task-filters">
+                <button class="filter-btn active" onclick="filterTasks('all')">All</button>
+                <button class="filter-btn" onclick="filterTasks('pending')">Pending</button>
+                <button class="filter-btn" onclick="filterTasks('in-progress')">In Progress</button>
+                <button class="filter-btn" onclick="filterTasks('completed')">Completed</button>
+                <button class="filter-btn" onclick="filterTasks('overdue')">Overdue</button>
+            </div>
+
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Lead</th>
+                            <th>Assigned To</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tasksTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Communication Section -->
+        <section id="communication-section" class="content-section">
+            <div class="section-header">
+                <h2>Communication Tracking</h2>
+                <div class="section-actions">
+                    <select id="commLeadSelect"
+                        style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin-right: 12px; min-width: 200px;">
+                        <option value="">Select Lead...</option>
+                    </select>
+                    <button class="btn btn-success" onclick="openSendEmailModalWithLeadSelect()">
+                        <ion-icon name="mail-outline" class="icon-sm"></ion-icon> Send Email
+                    </button>
+                    <button class="btn btn-success" onclick="openSendWhatsAppModalWithLeadSelect()">
+                        <ion-icon name="logo-whatsapp" class="icon-sm"></ion-icon> Send WhatsApp
+                    </button>
+                    <button class="btn btn-secondary" onclick="openLogCallModalWithLeadSelect()">
+                        <ion-icon name="call-outline" class="icon-sm"></ion-icon> Log Call
+                    </button>
+                    <button class="btn btn-secondary" onclick="openLogMeetingModalWithLeadSelect()">
+                        <ion-icon name="people-outline" class="icon-sm"></ion-icon> Log Meeting
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Lead</th>
+                            <th>Subject/Description</th>
+                            <th>Direction</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="communicationTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics-section" class="content-section">
+            <div class="section-header">
+                <h2>Analytics & Reports</h2>
+                <button class="btn btn-secondary" onclick="exportAnalytics()">
+                    <ion-icon name="download-outline" class="icon-sm"></ion-icon> Export Report
+                </button>
+            </div>
+
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h3><ion-icon name="pie-chart-outline" class="icon-sm"></ion-icon> Lead Conversion Rate</h3>
+                    <div class="chart-placeholder" id="conversionChart">
+                        <div class="chart-value">32.5%</div>
+                        <div class="chart-label">Conversion Rate</div>
+                    </div>
+                </div>
+                <div class="analytics-card">
+                    <h3><ion-icon name="bar-chart-outline" class="icon-sm"></ion-icon> Pipeline Analysis</h3>
+                    <div class="chart-placeholder" id="pipelineChart"></div>
+                </div>
+                <div class="analytics-card">
+                    <h3><ion-icon name="people-outline" class="icon-sm"></ion-icon> Team Performance</h3>
+                    <div class="chart-placeholder" id="teamChart"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- User Management Section (Admin and Manager) -->
+        <section id="users-section" class="content-section admin-manager-only">
+            <div class="section-header">
+                <h2>User Management</h2>
+                <button class="btn btn-primary" onclick="openAddUserModal()">
+                    <ion-icon name="person-add-outline" class="icon-sm"></ion-icon> Add User
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table class="user-management-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings-section" class="content-section">
+            <div class="section-header">
+                <h2>Settings</h2>
+            </div>
+
+            <div class="settings-tabs">
+                <button class="tab-btn active" onclick="showSettingsTab('profile')">
+                    <ion-icon name="person-outline" class="icon-sm"></ion-icon> Profile
+                </button>
+                <button class="tab-btn" onclick="showSettingsTab('company')">
+                    <ion-icon name="business-outline" class="icon-sm"></ion-icon> Company
+                </button>
+                <button class="tab-btn" onclick="showSettingsTab('email')">
+                    <ion-icon name="mail-outline" class="icon-sm"></ion-icon> Email Config
+                </button>
+                <button class="tab-btn" onclick="showSettingsTab('whatsapp')">
+                    <ion-icon name="logo-whatsapp" class="icon-sm"></ion-icon> WhatsApp Config
+                </button>
+                <button class="tab-btn" onclick="showSettingsTab('notifications')">
+                    <ion-icon name="notifications-outline" class="icon-sm"></ion-icon> Notifications
+                </button>
+                <button class="tab-btn" onclick="showSettingsTab('customFields')">
+                    <ion-icon name="server-outline" class="icon-sm"></ion-icon> Custom Fields
+                </button>
+                <button class="tab-btn" onclick="showSettingsTab('backup')">
+                    <ion-icon name="cloud-upload-outline" class="icon-sm"></ion-icon> Backup
+                </button>
+                <div style="flex-grow: 1;"></div>
+                <button class="tab-btn text-danger" onclick="logout()"
+                    style="color: #ef4444; border: 1px solid #fee2e2; background-color: #fef2f2; margin-left: auto;">
+                    <ion-icon name="log-out-outline" class="icon-sm"></ion-icon> Log Out
+                </button>
+            </div>
+
+            <div class="settings-content">
+                <!-- Profile Tab -->
+                <div id="profile-tab" class="settings-tab active">
+                    <h3>Profile Settings</h3>
+                    <form id="profileForm" onsubmit="updateProfile(event)">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="profileName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="profileUsername">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="profileEmail" readonly>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </form>
+
+                    <hr>
+
+                    <h3>Change Password</h3>
+                    <form id="passwordForm" onsubmit="changePassword(event)">
+                        <div class="form-group">
+                            <label>Current Password</label>
+                            <input type="password" id="currentPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="password" id="newPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Confirm New Password</label>
+                            <input type="password" id="confirmPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Change Password</button>
+                    </form>
+
+                    <hr>
+
+                    <h3>API Key</h3>
+                    <p>Use this key to authenticate API requests</p>
+                    <div class="api-key-display">
+                        <input type="text" id="apiKeyDisplay" readonly>
+                        <button class="btn btn-secondary" onclick="copyApiKey()">
+                            <ion-icon name="copy-outline" class="icon-sm"></ion-icon> Copy
+                        </button>
+                        <button class="btn btn-warning" onclick="regenerateApiKey()">
+                            <ion-icon name="refresh-outline" class="icon-sm"></ion-icon> Regenerate
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Company Tab -->
+                <div id="company-tab" class="settings-tab">
+                    <h3>Company Information</h3>
+                    <form id="companyForm" onsubmit="updateCompanySettings(event)">
+                        <div class="form-group">
+                            <label>Company Name</label>
+                            <input type="text" id="companyName">
+                        </div>
+                        <div class="form-group">
+                            <label>Website</label>
+                            <input type="url" id="companyWebsite">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" id="companyPhone">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="companyEmail">
+                        </div>
+                        <div class="form-group">
+                            <label>Address</label>
+                            <textarea id="companyAddress" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Company Info</button>
+                    </form>
+                </div>
+
+                <!-- Email Config Tab -->
+                <div id="email-tab" class="settings-tab">
+                    <h3>Email Configuration - Outlook/Office 365</h3>
+                    <p class="text-muted">Configure your personal Outlook email to send emails from the CRM</p>
+
+                    <div id="emailConfigStatus" class="alert alert-info" style="display: none; margin-bottom: 20px;">
+                        <ion-icon name="information-circle-outline" class="icon-sm"></ion-icon> <span
+                            id="emailStatusText"></span>
+                    </div>
+
+                    <form id="emailForm" onsubmit="saveEmailConfig(event)">
+                        <div class="form-group">
+                            <label>Outlook Email Address *</label>
+                            <input type="email" id="outlookEmail" placeholder="your-email@outlook.com" required>
+                            <small class="text-muted">Works with @outlook.com, @hotmail.com, or Office 365
+                                accounts</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Outlook Password *</label>
+                            <input type="password" id="outlookPassword" placeholder="Your Outlook password" required>
+                            <small class="text-muted">For Office 365 with 2FA, use an App Password</small>
+                        </div>
+                        <div class="form-actions" style="display: flex; gap: 10px;">
+                            <button type="submit" class="btn btn-primary">
+                                <ion-icon name="save-outline" class="icon-sm"></ion-icon> Save & Verify
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="testEmailConfig()">
+                                <ion-icon name="send-outline" class="icon-sm"></ion-icon> Send Test Email
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="removeEmailConfig()"
+                                style="margin-left: auto;">
+                                <ion-icon name="trash-outline" class="icon-sm"></ion-icon> Remove Config
+                            </button>
+                        </div>
+                    </form>
+
+                    <div style="margin-top: 30px; padding: 15px; background: #f9f9f9; border-radius: 5px;">
+                        <h4>Setup Instructions:</h4>
+                        <ol style="margin: 10px 0; padding-left: 20px;">
+                            <li>Enter your Outlook/Office 365 email address</li>
+                            <li>Enter your password (or App Password if 2FA is enabled)</li>
+                            <li>Click "Save & Verify" to test the connection</li>
+                            <li>Once verified, you can send emails from the CRM</li>
+                        </ol>
+                        <p style="margin-top: 15px;"><strong>For Office 365 with Two-Factor Authentication:</strong></p>
+                        <ul style="margin: 5px 0; padding-left: 20px;">
+                            <li>Go to <a href="https://account.microsoft.com/security" target="_blank">Microsoft
+                                    Security</a></li>
+                            <li>Select "Advanced security options"</li>
+                            <li>Under "App passwords", create a new one</li>
+                            <li>Use that App Password here instead of your regular password</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- WhatsApp Config Tab -->
+                <div id="whatsapp-tab" class="settings-tab">
+                    <h3>WhatsApp Configuration</h3>
+                    <form id="whatsappForm" onsubmit="updateWhatsAppSettings(event)">
+                        <div class="form-group">
+                            <label>API URL</label>
+                            <input type="url" id="whatsappApiUrl">
+                        </div>
+                        <div class="form-group">
+                            <label>API Key</label>
+                            <input type="text" id="whatsappApiKey">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" id="whatsappPhone">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save WhatsApp Config</button>
+                    </form>
+                </div>
+
+                <!-- Other tabs similar structure -->
+                <div id="notifications-tab" class="settings-tab">
+                    <h3>Notification Preferences</h3>
+                    <form id="notificationsForm" onsubmit="updateNotificationSettings(event)">
+                        <div class="form-check">
+                            <input type="checkbox" id="emailNotif">
+                            <label for="emailNotif">Email Notifications</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" id="taskNotif">
+                            <label for="taskNotif">Task Reminders</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" id="leadNotif">
+                            <label for="leadNotif">New Lead Notifications</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Preferences</button>
+                    </form>
+                </div>
+
+                <div id="customFields-tab" class="settings-tab">
+                    <h3>Custom Fields</h3>
+                    <p>Add custom fields to leads for your specific needs</p>
+                    <button class="btn btn-secondary" onclick="addCustomField()">
+                        <ion-icon name="add-outline" class="icon-sm"></ion-icon> Add Custom Field
+                    </button>
+                    <div id="customFieldsList" class="custom-fields-list"></div>
+                </div>
+
+                <div id="backup-tab" class="settings-tab">
+                    <h3>Backup & Restore</h3>
+                    <div class="backup-info">
+                        <p><strong>Last Backup:</strong> <span id="lastBackupDate">Never</span></p>
+                        <button class="btn btn-primary" onclick="triggerBackup()">
+                            <ion-icon name="cloud-upload-outline" class="icon-sm"></ion-icon> Backup Now
+                        </button>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" id="autoBackup">
+                        <label for="autoBackup">Enable Auto Backup</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Activity Logs Section -->
+        <section id="activity-logs-section" class="content-section">
+            <div class="section-header">
+                <h2>Activity Logs</h2>
+                <div class="section-actions">
+                    <select id="activityModuleFilter" onchange="filterActivityLogs()">
+                        <option value="">All Modules</option>
+                        <option value="leads">Leads</option>
+                        <option value="users">Users</option>
+                        <option value="tasks">Tasks</option>
+                        <option value="communication">Communication</option>
+                        <option value="settings">Settings</option>
+                    </select>
+                    <input type="date" id="activityDateFilter" onchange="filterActivityLogs()">
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Module</th>
+                            <th>Description</th>
+                            <th>IP Address</th>
+                            <th>Date/Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activityLogsTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Import/Export Section -->
+        <section id="import-export-section" class="content-section">
+            <div class="section-header">
+                <h2>Import & Export Data</h2>
+            </div>
+
+            <div class="import-export-grid">
+                <div class="ie-card">
+                    <h3><ion-icon name="document-text-outline" class="icon-sm"></ion-icon> Export Leads</h3>
+                    <p>Download all leads as CSV</p>
+                    <button class="btn btn-success" onclick="exportLeads()">
+                        <ion-icon name="download-outline" class="icon-sm"></ion-icon> Export Leads
+                    </button>
+                </div>
+
+                <div class="ie-card">
+                    <h3><ion-icon name="bar-chart-outline" class="icon-sm"></ion-icon> Export Analytics</h3>
+                    <p>Download analytics report</p>
+                    <button class="btn btn-success" onclick="exportAnalyticsData()">
+                        <ion-icon name="download-outline" class="icon-sm"></ion-icon> Export Analytics
+                    </button>
+                </div>
+
+                <div class="ie-card">
+                    <h3><ion-icon name="time-outline" class="icon-sm"></ion-icon> Export Activity Logs</h3>
+                    <p>Download activity history</p>
+                    <button class="btn btn-success" onclick="exportActivityLogs()">
+                        <ion-icon name="download-outline" class="icon-sm"></ion-icon> Export Logs
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- Invoices Section                           -->
+        <!-- ═══════════════════════════════════════════ -->
+        <section id="invoices-section" class="content-section">
+            <div class="section-header">
+                <h2>Invoices</h2>
+                <div class="header-actions invoice-admin-section" style="display:flex;gap:8px;">
+                    <button class="btn btn-secondary superadmin-only" onclick="showSection('invoice-settings')">
+                        <ion-icon name="settings-outline" class="icon-sm"></ion-icon> Invoice Settings
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="stats-grid invoice-admin-section" id="invoiceStatsGrid" style="margin-bottom:18px;">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fff7ed"><ion-icon name="document-text-outline"
+                            class="icon-sm" style="color:#ff8c00"></ion-icon></div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="invStatTotal">—</div>
+                        <div class="stat-label">Total Invoices</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e6f4ea"><ion-icon name="checkmark-circle-outline"
+                            class="icon-sm" style="color:#2e7d32"></ion-icon></div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="invStatPaid">—</div>
+                        <div class="stat-label">Paid</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fff3e0"><ion-icon name="time-outline" class="icon-sm"
+                            style="color:#ef6c00"></ion-icon></div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="invStatUnpaid">—</div>
+                        <div class="stat-label">Unpaid</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fce8e8"><ion-icon name="warning-outline" class="icon-sm"
+                            style="color:#c62828"></ion-icon></div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="invStatOverdue">—</div>
+                        <div class="stat-label">Overdue</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fff7ed"><ion-icon name="cash-outline" class="icon-sm"
+                            style="color:#ff8c00"></ion-icon></div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="invStatValue">—</div>
+                        <div class="stat-label">Total Value</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab switcher: Invoices | Pending Approvals -->
+            <div class="invoice-tabs" id="invoiceTabNav"
+                style="display:flex;gap:0;margin-bottom:12px;border-bottom:2px solid #e0e0e0;align-items:center;">
+                <button id="invTabBtnInvoices" onclick="showInvoiceTab('list')"
+                    style="padding:8px 20px;border:none;background:none;font-weight:bold;color:#ff8c00;border-bottom:3px solid #ff8c00;cursor:pointer;">
+                    <ion-icon name="document-text-outline" class="icon-sm"></ion-icon> All Invoices
+                </button>
+                <button id="invTabBtnPending" onclick="showInvoiceTab('pending')"
+                    class="invoice-superadmin-section"
+                    style="padding:8px 20px;border:none;background:none;color:#666;cursor:pointer;">
+                    <ion-icon name="hourglass-outline" class="icon-sm"></ion-icon>
+                    Pending Approvals <span id="pendingApprovalCount" style="display:none;background:#dc2626;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;">0</span>
+                </button>
+                <a href="#" onclick="showSection('invoice-settings')"
+                    class="invoice-superadmin-section"
+                    style="margin-left:auto;padding:6px 14px;border-radius:8px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:13px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px;">
+                    <ion-icon name="settings-outline" class="icon-sm"></ion-icon> Invoice Settings
+                </a>
+            </div>
+
+            <!-- Invoice List -->
+            <div id="invoiceListTab">
+                <!-- Filters -->
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+                    <input type="text" id="invSearch" placeholder="Search invoice / customer / candidate..."
+                        class="form-control" style="width:260px;" oninput="loadInvoices()">
+                    <select id="invFilterStatus" class="form-control" style="width:150px;" onchange="loadInvoices()">
+                        <option value="">All Statuses</option>
+                        <option value="unpaid">Unpaid</option>
+                        <option value="paid">Paid</option>
+                        <option value="overdue">Overdue</option>
+                        <option value="partial">Partial</option>
+                    </select>
+                    <input type="date" id="invFilterFrom" class="form-control" style="width:150px;"
+                        onchange="loadInvoices()" placeholder="From">
+                    <input type="date" id="invFilterTo" class="form-control" style="width:150px;"
+                        onchange="loadInvoices()" placeholder="To">
+                    <button class="btn btn-secondary" onclick="clearInvoiceFilters()"><ion-icon name="close-outline"
+                            class="icon-sm"></ion-icon> Clear</button>
+                    <button class="btn btn-primary" onclick="openCreateInvoiceModal()"><ion-icon name="add-outline"
+                            class="icon-sm"></ion-icon> New Invoice</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice No</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Candidates</th>
+                                <th>Chargeable Amt (₹)</th>
+                                <th>Net Payable (₹)</th>
+                                <th>Due Date</th>
+                                <th>Pay Status</th>
+                                <th>Approval</th>
+                                <th style="text-align:center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoiceTableBody">
+                            <tr>
+                                <td colspan="10" style="text-align:center;padding:20px;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pending Approvals List (superadmin only) -->
+            <div id="invoicePendingTab" style="display:none;" class="invoice-superadmin-section">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <strong style="font-size:15px;color:#9a3412;">Invoices awaiting your approval</strong>
+                    <button class="btn btn-secondary btn-sm" onclick="loadPendingApprovals()">
+                        <ion-icon name="refresh-outline" class="icon-sm"></ion-icon> Refresh
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Invoice No</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Net Payable (₹)</th>
+                                <th>Submitted By</th>
+                                <th>Due Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoicePendingTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align:center;padding:20px;color:#999;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- Invoice Settings Section (superadmin only)  -->
+        <!-- ═══════════════════════════════════════════ -->
+        <section id="invoice-settings-section" class="content-section superadmin-only">
+            <div class="section-header">
+                <h2><ion-icon name="receipt-outline" class="icon-sm" style="color:#ff8c00;"></ion-icon> Invoice Settings</h2>
+            </div>
+
+            <!-- Settings tabs nav -->
+            <div style="display:flex;gap:0;margin-bottom:12px;border-bottom:2px solid #e0e0e0;flex-wrap:wrap;">
+                <button id="invSetTabBtnCustomers" onclick="showInvoiceSettingsTab('customers')"
+                    style="padding:8px 20px;border:none;background:none;font-weight:bold;color:#ff8c00;border-bottom:3px solid #ff8c00;cursor:pointer;">
+                    <ion-icon name="business-outline" class="icon-sm"></ion-icon> Customers
+                </button>
+                <button id="invSetTabBtnCompanies" onclick="showInvoiceSettingsTab('companies')"
+                    style="padding:8px 20px;border:none;background:none;color:#666;cursor:pointer;">
+                    <ion-icon name="briefcase-outline" class="icon-sm"></ion-icon> Billing Companies
+                </button>
+                <button id="invSetTabBtnSeries" onclick="showInvoiceSettingsTab('series')"
+                    style="padding:8px 20px;border:none;background:none;color:#666;cursor:pointer;">
+                    <ion-icon name="options-outline" class="icon-sm"></ion-icon> Invoice Series
+                </button>
+                <button id="invSetTabBtnSeal" onclick="showInvoiceSettingsTab('seal')"
+                    style="padding:8px 20px;border:none;background:none;color:#666;cursor:pointer;">
+                    <ion-icon name="shield-checkmark-outline" class="icon-sm"></ion-icon> Signature &amp; Seal
+                </button>
+            </div>
+
+            <!-- ── Customers tab ─────────────────────── -->
+            <div id="invSetCustomersTab">
+                <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+                    <button class="btn btn-primary" onclick="openCreateCustomerModal()">
+                        <ion-icon name="add-outline" class="icon-sm"></ion-icon> Add Customer
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Customer ID</th>
+                                <th>Name</th>
+                                <th>GST No</th>
+                                <th>Contact</th>
+                                <th>Email</th>
+                                <th>Vendor Code</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invSetCustomersTableBody">
+                            <tr><td colspan="7" style="text-align:center;padding:20px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ── Billing Companies tab ─────────────── -->
+            <div id="invSetCompaniesTab" style="display:none;">
+                <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+                    <button class="btn btn-primary" onclick="openCreateBillingCompanyModal()">
+                        <ion-icon name="add-outline" class="icon-sm"></ion-icon> Add Company
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Company Name</th>
+                                <th>Tagline / SAC</th>
+                                <th>PAN</th>
+                                <th>GSTN</th>
+                                <th>Bank</th>
+                                <th>Primary</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invSetCompaniesTableBody">
+                            <tr><td colspan="7" style="text-align:center;padding:20px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ── Invoice Series tab ────────────────── -->
+            <div id="invSetSeriesTab" style="display:none;">
+                <div style="max-width:700px;">
+                    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;">
+                        <ion-icon name="information-circle-outline" style="color:#ff8c00;font-size:22px;flex-shrink:0;margin-top:2px;"></ion-icon>
+                        <div>
+                            <strong style="color:#9a3412;">Invoice Numbering Series</strong>
+                            <p style="margin:4px 0 0;color:#7c3a1c;font-size:13px;">
+                                Format: <code style="background:#fde68a;padding:1px 6px;border-radius:4px;font-weight:600;">PREFIX/YYZZ/NNN</code>
+                                &nbsp;e.g. <strong>KM/2526/001</strong><br>
+                                Each financial year (Apr–Mar) starts a new sequence.
+                            </p>
+                        </div>
+                    </div>
+                    <div style="background: #fdfbf4;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:20px;">
+                        <div style="background:#f9fafb;padding:12px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+                            <strong style="font-size:15px;">Active Series</strong>
+                            <button class="btn btn-primary btn-sm" onclick="loadInvoiceSeriesSettings()">
+                                <ion-icon name="refresh-outline" class="icon-sm"></ion-icon> Refresh
+                            </button>
+                        </div>
+                        <table class="data-table" id="invSetSeriesTable" style="min-width:100%;">
+                            <thead>
+                                <tr>
+                                    <th>Financial Year</th>
+                                    <th>Prefix</th>
+                                    <th>Current Counter</th>
+                                    <th>Next Invoice No.</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invSetSeriesTableBody">
+                                <tr><td colspan="5" style="text-align:center;padding:20px;color:#999;">Click Refresh to load series data</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="background: #fdfbf4;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px;">
+                        <strong style="font-size:15px;display:block;margin-bottom:14px;">
+                            <ion-icon name="add-circle-outline" class="icon-sm" style="color:#ff8c00;"></ion-icon> Configure New / Existing FY Series
+                        </strong>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;">
+                            <div class="form-group" style="margin:0;">
+                                <label>Financial Year <span style="font-size:11px;color:#9ca3af;">(e.g. 2627)</span></label>
+                                <input type="text" id="invSetSeriesFY" maxlength="4" placeholder="2627" class="form-control">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label>Prefix</label>
+                                <input type="text" id="invSetSeriesPrefix" value="KM" maxlength="10" class="form-control">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label>Start From (counter)</label>
+                                <input type="number" id="invSetSeriesCounter" value="0" min="0" class="form-control">
+                            </div>
+                            <button class="btn btn-primary" onclick="saveInvoiceSeriesSettings()" style="height:38px;">
+                                <ion-icon name="save-outline" class="icon-sm"></ion-icon> Save
+                            </button>
+                        </div>
+                        <p style="font-size:12px;color:#9ca3af;margin-top:8px;">Setting counter to <strong>0</strong> means the very next invoice will be <strong>001</strong>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Signature & Seal tab ──────────────── -->
+            <div id="invSetSealTab" style="display:none;">
+                <div style="max-width:600px;">
+                    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#9a3412;">
+                        <strong>Default Signature &amp; Seal Settings</strong><br>
+                        <span style="font-size:12px;">These values will pre-populate the Sign &amp; Seal modal when signing any invoice. You can still override them per-invoice.</span>
+                    </div>
+                    <div style="background: #fdfbf4;border:1px solid #e5e7eb;border-radius:12px;padding:24px;">
+                        <div class="form-group">
+                            <label><strong>Default Signatory Name</strong></label>
+                            <input type="text" id="invSetSignatoryName" class="form-control" placeholder="e.g. Rajesh Kumar" style="max-width:340px;">
+                            <small style="color:#9ca3af;">Pre-filled when opening the Sign &amp; Seal modal.</small>
+                        </div>
+                        <div class="form-group" style="margin-top:20px;">
+                            <label><strong>Default Company Seal / Stamp</strong></label>
+                            <div id="invSetSealPreviewWrap" style="margin-bottom:10px;display:none;">
+                                <img id="invSetSealPreview" src="" alt="Current seal" style="max-height:80px;max-width:200px;border:1px solid #e5e7eb;border-radius:8px;padding:4px;background:#fafafa;">
+                                <button type="button" class="btn btn-sm btn-danger" onclick="removeDefaultSeal()" style="display:block;margin-top:6px;">
+                                    <ion-icon name="trash-outline" class="icon-sm"></ion-icon> Remove Seal
+                                </button>
+                            </div>
+                            <input type="file" id="invSetSealFile" class="form-control" accept="image/*" style="max-width:340px;" onchange="previewDefaultSeal(this)">
+                            <small style="color:#9ca3af;">PNG/JPG of your company seal. Saved and auto-attached when signing invoices.</small>
+                        </div>
+                        <div style="margin-top:24px;">
+                            <button class="btn btn-primary" onclick="saveInvoiceDefaultSeal()">
+                                <ion-icon name="save-outline" class="icon-sm"></ion-icon> Save Defaults
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ═══════ Invoice Modals ═══════ -->
+
+    <!-- Create/Edit Invoice Modal -->
+    <div id="invoiceModal" class="modal" style="display:none;">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="invoiceModalTitle">New Invoice</h2>
+                <button class="modal-close" onclick="closeInvoiceModal()">&times;</button>
+            </div>
+            <form id="invoiceForm" onsubmit="handleSaveInvoice(event)">
+                <input type="hidden" id="invoiceEditId">
+                <div class="invoice-entry-sheet">
+                    <div class="invoice-sheet-header">
+                        <div class="invoice-sheet-brand">Ken McCoy Consulting</div>
+                        <div class="invoice-sheet-title">TAX INVOICE ENTRY</div>
+                    </div>
+
+                    <div class="invoice-sheet-subheader">
+                        <span>B201, Hind Saurashtra Ind.Est, Marol, Andheri (E), Mumbai 400059</span>
+                        <span>Tel: 91 22 42959123</span>
+                    </div>
+
+                    <div class="invoice-sheet-grid">
+                        <div class="invoice-panel">
+                            <div class="invoice-panel-title">CUSTOMER</div>
+                            <div class="form-group">
+                                <label>Billing Company *</label>
+                                <select id="invBillingCompany" name="billingCompanyId" required>
+                                    <option value="">Select Company</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Customer *</label>
+                                <select id="invCustomer" name="customerId" required onchange="onInvoiceCustomerChange()">
+                                    <option value="">Select Customer</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Dept Code</label>
+                                    <input type="text" id="invDeptCode" name="deptCode" value="NA">
+                                </div>
+                                <div class="form-group">
+                                    <label>PO ID</label>
+                                    <input type="text" id="invPoId" name="poId" placeholder="Optional">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="invoice-panel">
+                            <div class="invoice-panel-title">INVOICE DETAILS</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Invoice Number *</label>
+                                    <input type="text" id="invNo" name="invoiceNumber" readonly placeholder="Auto-generated (e.g. KM/2627/001)">
+                                    <small id="invNoHint" style="display:none;color:#dc2626;font-size:11px;">🔒 Invoice number is
+                                        locked and cannot be changed once created.</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Invoice Date *</label>
+                                    <input type="date" id="invDate" name="invoiceDate" required onchange="recalcInvoiceDueDate(); refreshAutoInvoiceNumber();">
+                                    <small id="invDateHint" style="display:none;color:#dc2626;font-size:11px;">🔒 Invoice date is
+                                        locked and cannot be changed once created.</small>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Payment Terms *</label>
+                                    <select id="invDueDays" name="dueDays" onchange="recalcInvoiceDueDate()" required>
+                                        <option value="30" selected>30 Days</option>
+                                        <option value="60">60 Days</option>
+                                        <option value="90">90 Days</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Due Date *</label>
+                                    <input type="date" id="invDueDate" name="dueDate" required readonly>
+                                    <small style="color:#6b7280;font-size:11px;">Auto-calculated from Invoice Date + Payment Terms</small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Service Type *</label>
+                                    <select id="invServiceType" name="serviceType">
+                                        <option value="sourcing">Sourcing, Recruiting & Onboarding</option>
+                                        <option value="assessment">Assessment Center Based Recommendation</option>
+                                        <option value="both">Both</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="invoice-panel" style="margin-top:12px;">
+                        <div class="invoice-panel-title">DESCRIPTION OF SERVICE</div>
+                        <div class="form-group">
+                            <label>Charges For</label>
+                            <input type="text" id="invChargesFor" name="chargesFor"
+                                placeholder="e.g. Mr. Samrish Sen - Deputy Manager Sales & Marketing">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Chargeable Salary (₹) *</label>
+                                <input type="number" id="invSalary" name="chargeableSalary" min="0" step="0.01" required
+                                    oninput="recalcInvoice()">
+                            </div>
+                            <div class="form-group">
+                                <label>Rate (%) *</label>
+                                <input type="number" id="invRate" name="rate" min="0" max="100" step="0.01" required
+                                    placeholder="e.g. 8.33" oninput="recalcInvoice()">
+                            </div>
+                        </div>
+
+                        <div id="invCalcPreview" class="invoice-calc-preview" style="display:none;">
+                            <div class="invoice-calc-row">
+                                <span>Chargeable Amt: <strong id="prevChargeAmt">₹0</strong></span>
+                                <span id="prevTaxLabel">Tax: <strong id="prevTax">₹0</strong></span>
+                                <span>Total: <strong id="prevTotal">₹0</strong></span>
+                                <span>Net Payable: <strong id="prevNet" style="color:#003087;">₹0</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="invoice-candidate-header">
+                            <div>
+                                <span class="invoice-candidate-title">Candidates</span>
+                                <span class="invoice-candidate-subtitle">Placed candidates to be billed</span>
+                            </div>
+                            <button type="button" class="invoice-add-candidate-btn" onclick="addCandidateRow()">
+                                <ion-icon name="person-add-outline" class="icon-sm"></ion-icon> Add Candidate
+                            </button>
+                        </div>
+                        <div id="candidateRowsContainer"></div>
+                    </div>
+
+                    <div class="invoice-sheet-grid" style="margin-top:12px;">
+                        <div class="invoice-panel">
+                            <div class="invoice-panel-title">PAYMENT DETAILS</div>
+                            <div class="form-row invoice-payment-fields">
+                                <div class="form-group">
+                                    <label>Payment Status</label>
+                                    <select id="invPayStatus" name="paymentStatus">
+                                        <option value="unpaid">Unpaid</option>
+                                        <option value="paid">Paid</option>
+                                        <option value="partial">Partial</option>
+                                        <option value="overdue">Overdue</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Received Date</label>
+                                    <input type="date" id="invReceivedDate" name="receivedDate">
+                                </div>
+                            </div>
+                            <div class="form-row invoice-payment-fields">
+                                <div class="form-group">
+                                    <label>Receivable Amount (₹)</label>
+                                    <input type="number" id="invReceivable" name="receivableAmount" min="0" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>TDS Amount (₹)</label>
+                                    <input type="number" id="invTds" name="tdsAmount" min="0" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="invoice-panel">
+                            <div class="invoice-panel-title">NOTES</div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label>Internal Notes</label>
+                                <textarea id="invNotes" name="notes" rows="6" placeholder="Internal notes..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeInvoiceModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Invoice</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Invoice Modal -->
+    <div id="viewInvoiceModal" class="modal" style="display:none;">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Invoice Details</h2>
+                <button class="modal-close" onclick="closeViewInvoiceModal()">&times;</button>
+            </div>
+            <div id="viewInvoiceContent" style="padding:0 20px 10px;"></div>
+            <div class="modal-footer" style="gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-secondary" onclick="closeViewInvoiceModal()">Close</button>
+
+                <button class="btn btn-primary" id="viewInvPdfBtn" onclick="">
+                    <ion-icon name="document-attach-outline" class="icon-sm"></ion-icon> Download PDF
+                </button>
+                <button class="btn btn-success" id="viewInvSignBtn" onclick="" style="display:none;">
+                    <ion-icon name="pencil-outline" class="icon-sm"></ion-icon> Sign &amp; Seal → PDF
+                </button>
+                <button class="btn btn-warning" id="viewInvSignedPdfBtn" onclick="" style="display:none;">
+                    <ion-icon name="checkmark-shield-outline" class="icon-sm"></ion-icon> Download Signed PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Sign & Seal Modal ───────────────────────────────────── -->
+    <div id="signInvoiceModal" class="modal" style="display:none;">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2><ion-icon name="shield-checkmark-outline" class="icon-sm" style="color:#ff8c00;"></ion-icon> Sign
+                    &amp; Seal Invoice</h2>
+                <button class="modal-close" onclick="closeSignModal()">&times;</button>
+            </div>
+            <div style="padding:20px;">
+                <input type="hidden" id="signInvoiceId">
+
+                <!-- Info banner -->
+                <div
+                    style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#9a3412;">
+                    <strong>⚠️ Once signed, the invoice will be locked.</strong> A signed PDF will become available for
+                    download and sending to the client.
+                </div>
+
+                <!-- Signatory name -->
+                <div class="form-group">
+                    <label>Signatory Name *</label>
+                    <input type="text" id="signSignatoryName" class="form-control" placeholder="e.g. Rajesh Kumar"
+                        required>
+                </div>
+
+                <!-- Signature canvas -->
+                <div class="form-group">
+                    <label>Draw Your Signature *</label>
+                    <div
+                        style="border:2px dashed #e5e7eb;border-radius:10px;background:#fafafa;position:relative;margin-bottom:6px;">
+                        <canvas id="signatureCanvas" width="680" height="140"
+                            style="display:block;border-radius:8px;cursor:crosshair;touch-action:none;width:100%;"></canvas>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="clearSignaturePad()">
+                            <ion-icon name="close-outline" class="icon-sm"></ion-icon> Clear Signature
+                        </button>
+                        <span style="font-size:12px;color:#9ca3af;align-self:center;">Draw your signature above using
+                            mouse or touch</span>
+                    </div>
+                </div>
+
+                <!-- Seal / stamp upload -->
+                <div class="form-group">
+                    <label>Company Seal / Stamp <span style="font-size:11px;color:#9ca3af;">(optional — image
+                            file)</span></label>
+                    <input type="file" id="signSealFile" class="form-control" accept="image/*">
+                    <small style="color:#9ca3af;">Upload a PNG/JPG of your company seal. It will appear on the signed
+                        PDF.</small>
+                </div>
+
+                <hr style="border:none;border-top:1px solid #e5e7eb;margin:18px 0;">
+
+                <!-- Attachments section -->
+                <div style="margin-bottom:6px;">
+                    <strong style="font-size:14px;"><ion-icon name="attach-outline" class="icon-sm"
+                            style="color:#ff8c00;"></ion-icon> Supporting Documents</strong>
+                    <span style="font-size:12px;color:#9ca3af;margin-left:8px;">Attach before signing — they'll be
+                        linked to the invoice</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Customer Agreement <span style="font-size:11px;color:#9ca3af;">(PDF/Word)</span></label>
+                        <input type="file" id="attachCustomerAgreement" class="form-control" accept=".pdf,.doc,.docx">
+                    </div>
+                    <div class="form-group">
+                        <label>Offer Letter <span style="font-size:11px;color:#9ca3af;">(PDF/Word)</span></label>
+                        <input type="file" id="attachOfferLetter" class="form-control" accept=".pdf,.doc,.docx">
+                    </div>
+                </div>
+
+                <!-- Existing attachments -->
+                <div id="existingAttachments" style="margin-bottom:14px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeSignModal()">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="handleSignInvoice()" id="signSubmitBtn">
+                    <ion-icon name="checkmark-shield-outline" class="icon-sm"></ion-icon> Sign &amp; Lock Invoice
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Customer Modal -->
+    <div id="invoiceCustomerModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="custModalTitle">Add Customer</h2>
+                <button class="modal-close" onclick="closeCustomerModal()">&times;</button>
+            </div>
+            <form id="invoiceCustomerForm" onsubmit="handleSaveCustomer(event)">
+                <input type="hidden" id="custEditId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Customer ID *</label>
+                        <input type="text" id="custId" required placeholder="e.g. KNPL">
+                    </div>
+                    <div class="form-group">
+                        <label>Name *</label>
+                        <input type="text" id="custName" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <textarea id="custAddress" rows="2"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Contact No</label>
+                        <input type="text" id="custContact">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="custEmail">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>GST No</label>
+                        <input type="text" id="custGst" placeholder="e.g. 27AAACG1376N1ZC">
+                    </div>
+                    <div class="form-group">
+                        <label>Vendor Code</label>
+                        <input type="text" id="custVendor" value="NA">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeCustomerModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create/Edit Billing Company Modal -->
+    <div id="billingCompanyModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="bcoModalTitle">Add Company</h2>
+                <button class="modal-close" onclick="closeBillingCompanyModal()">&times;</button>
+            </div>
+            <form id="billingCompanyForm" onsubmit="handleSaveBillingCompany(event)">
+                <input type="hidden" id="bcoEditId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Company Name *</label>
+                        <input type="text" id="bcoName" required placeholder="e.g. Ken McCoy Consulting">
+                    </div>
+                    <div class="form-group">
+                        <label>Tagline</label>
+                        <input type="text" id="bcoTagline" placeholder="Sourcing · Recruiting · Onboarding">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>SAC Code</label>
+                        <input type="text" id="bcoSacCode" placeholder="998516">
+                    </div>
+                    <div class="form-group">
+                        <label>PAN Number</label>
+                        <input type="text" id="bcoPan" placeholder="e.g. AADCK1234P">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Account Name</label>
+                        <input type="text" id="bcoAccountName" placeholder="Name on bank account">
+                    </div>
+                    <div class="form-group">
+                        <label>Bank Name</label>
+                        <input type="text" id="bcoBankName" placeholder="e.g. HDFC Bank">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Branch</label>
+                        <input type="text" id="bcoBranchName" placeholder="e.g. Andheri West">
+                    </div>
+                    <div class="form-group">
+                        <label>CA / Account Number</label>
+                        <input type="text" id="bcoCaNumber" placeholder="e.g. 10069714706">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>IFSC Code</label>
+                        <input type="text" id="bcoIfscCode" placeholder="e.g. IDFB0040155">
+                    </div>
+                    <div class="form-group">
+                        <label>GSTN</label>
+                        <input type="text" id="bcoGstn" placeholder="e.g. 27AADCK1234P1ZC">
+                    </div>
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="bcoIsPrimary" style="width:18px;height:18px;cursor:pointer;">
+                    <label for="bcoIsPrimary" style="margin:0;cursor:pointer;">Set as Primary Company (pre-selected on
+                        new invoices)</label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeBillingCompanyModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Company</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modals will be dynamically created in JavaScript -->
+    <div id="modalContainer"></div>
+
+    <!-- Modern Login Overlay -->
+    <div id="loginModal" class="login-split-overlay">
+        <div class="login-split-container">
+            <!-- Left Side: Branding / Illustration -->
+            <div class="login-left-panel">
+                <div class="login-illustration-wrapper">
+                    <!-- Replaced image with a generic modern professional abstract image -->
+                    <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=800&q=80" alt="Professional Workspace"
+                        class="login-illustration"
+                        style="max-height: 350px; object-fit: cover; width: 100%; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+                </div>
+                <div class="login-branding" style="margin-top: 25px;">
+                    <h2 class="login-hero-title">Welcome to Ken McCoy</h2>
+                    <p class="login-hero-text">Manage your leads, operations, and pipeline smoothly with our comprehensive CRM system. Empower your team and maximize your business efficiency.</p>
+                </div>
+            </div>
+
+            <!-- Right Side: Login Form -->
+            <div class="login-right-panel">
+                <div class="login-form-container">
+                    <div class="brand-header" style="text-align: center; margin-bottom: 2rem;">
+                        <img src="/images/logo-kmc.jpg" alt="Ken McCoy Logo" style="max-height: 80px; border-radius: 8px;">
+                    </div>
+
+                    <div class="login-welcome">
+                        <h2>Welcome back!</h2>
+                        <p>Empower Relationships, Elevate Results</p>
+                    </div>
+
+                    <form id="loginForm" onsubmit="login(event)" class="modern-login-form">
+                        <div class="modern-form-group">
+                            <label>User Name</label>
+                            <div class="input-wrapper">
+                                <ion-icon name="person-outline" class="input-icon"></ion-icon>
+                                <input type="email" id="loginEmail" placeholder="Enter Your User Name" required>
+                            </div>
+                        </div>
+
+                        <div class="modern-form-group">
+                            <label>Password</label>
+                            <div class="input-wrapper password-wrapper">
+                                <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
+                                <input type="password" id="loginPassword" placeholder="Enter Your Password" required>
+                                <ion-icon name="eye-off-outline" class="password-toggle" onclick="togglePasswordVisibility()"></ion-icon>
+                            </div>
+                        </div>
+
+                        <div class="login-options">
+                            <label class="remember-me">
+                                <input type="checkbox">
+                                <span>Remember me</span>
+                            </label>
+                            <a href="#" class="forgot-password">Forgot Password?</a>
+                        </div>
+
+                        <button type="submit" class="btn-modern-login">Login</button>
+
+                        <p class="text-center mt-20" style="color: #7f8c8d; font-size: 0.9em; margin-top: 15px;">
+                            Contact your administrator to get access
+                        </p>
+                    </form>
+
+                    <div class="login-footer">
+                        <p>&copy; Copyright <script>document.write(new Date().getFullYear())</script> Ken McCoy ATS. All rights reserved.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Dropdown -->
+    <div id="notificationsPanel" class="notifications-panel" style="display: none;">
+        <div class="notifications-header">
+            <h3>Notifications</h3>
+            <button class="btn-text" onclick="markAllNotificationsRead()">Mark all read</button>
+        </div>
+        <div id="notificationsList" class="notifications-list">
+            <div class="notification-empty">
+                <ion-icon name="bell-slash-outline" class="icon-sm"></ion-icon>
+                <p>No notifications</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Lead Modal -->
+    <div id="addLeadModal" class="modal">
+        <div class="modal-content modal-large new-lead-tabular">
+            <div class="modal-header">
+                <h2>New Lead Details</h2>
+                <button class="modal-close" onclick="closeAddLeadModal()">&times;</button>
+            </div>
+            <form id="addLeadForm" onsubmit="handleAddLead(event)">
+                <div class="tabular-container">
+                    <table class="new-lead-table">
+                        <tbody>
+                            <tr>
+                                <td class="label-col"><label>Company Name <span class="required">*</span></label></td>
+                                <td colspan="3"><input type="text" name="companyName" class="full-width" required placeholder="Compulsory field"></td>
+                            </tr>
+                            <tr>
+                                <td class="label-col"><label>Customer Code</label></td>
+                                <td><input type="text" name="customerCode" class="full-width"></td>
+                                <td class="label-col"><label>GST No.</label></td>
+                                <td><input type="text" name="gstNo" class="full-width"></td>
+                            </tr>
+                            <tr>
+                                <td class="label-col"><label>Address</label></td>
+                                <td><input type="text" name="address" class="full-width"></td>
+                                <td class="label-col"><label>Category</label></td>
+                                <td>
+                                    <select name="category" class="full-width">
+                                        <option value="">Select Category</option>
+                                        <option value="Corporate Office">Corporate Office</option>
+                                        <option value="Plant / Site">Plant / Site</option>
+                                        <option value="Other office">Other office</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="section-title">Contact Persons</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4">
+                                    <table class="contacts-inner-table" id="contactPersonsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Designation</th>
+                                                <th>Mobile No.</th>
+                                                <th>Email Id</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="contactPersonsBody">
+                                            <tr class="contact-row">
+                                                <td><input type="text" name="contacts[0][name]" class="contact-input"></td>
+                                                <td><input type="text" name="contacts[0][designation]" class="contact-input" placeholder="e.g. CEO, Manager"></td>
+                                                <td><input type="tel" name="contacts[0][mobile]" class="contact-input"></td>
+                                                <td><input type="email" name="contacts[0][email]" class="contact-input"></td>
+                                                <td><button type="button" class="btn btn-icon btn-add-contact" onclick="addContactRow()" title="Add Contact"><ion-icon name="add-circle-outline"></ion-icon></button></td>
+                                            </tr>
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="5" class="add-more-hint" style="text-align: right; font-size: 0.85em; color: #7f8c8d; padding-right: 15px;">* Keep Adding as many if required</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="label-col"><label>Status</label></td>
+                                <td>
+                                    <select name="status" class="full-width">
+                                        <option value="New Lead">New Lead</option>
+                                        <option value="Discussion with client (Introduction)">Discussion with client (Introduction)</option>
+                                        <option value="Sent Company Profile">Sent Company Profile</option>
+                                        <option value="Sent Commercial">Sent Commercial</option>
+                                        <option value="Meeting done">Meeting done</option>
+                                        <option value="Commercial Finalised(Mail)">Commercial Finalised(Mail)</option>
+                                        <option value="Test Position Received">Test Position Received</option>
+                                        <option value="Agreement Signed">Agreement Signed</option>
+                                    </select>
+                                </td>
+                                <td class="label-col"><label>Assigned To</label></td>
+                                <td>
+                                    <select name="assignedTo" id="leadAssignedTo" class="full-width">
+                                        <option value="">Select User</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="label-col"><label>Status Details</label></td>
+                                <td colspan="3"><textarea name="statusDetails" rows="2" class="full-width expandable-textarea" placeholder="Additional details about the current status..."></textarea></td>
+                            </tr>
+                            <tr>
+                                <td class="label-col"><label>About Client</label></td>
+                                <td colspan="3"><textarea name="remarks" rows="3" class="full-width" placeholder="Write about the client here..."></textarea></td>
+                            </tr>
+                            <tr class="restricted-uploads" id="adminUploadsRow">
+                                <td class="label-col">
+                                    <label>Up Loads</label>
+                                    <small style="display:block; font-size:10px; color:#c0392b; line-height:1.2;">*Only Admin & Super Admin</small>
+                                </td>
+                                <td colspan="3" class="admin-only-section">
+                                    <input type="file" name="files" multiple class="full-width" id="addLeadFiles">
+                                    <div class="upload-hint">Upload documents (PDF, DOC, JPG, PNG). Max 10MB per file.</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddLeadModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Lead</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Lead Modal -->
+    <div id="editLeadModal" class="modal">
+        <div class="modal-content modal-large new-lead-tabular">
+            <div class="modal-header">
+                <h2>Edit Lead</h2>
+                <button class="modal-close" onclick="closeEditLeadModal()">&times;</button>
+            </div>
+            <form id="editLeadForm" onsubmit="handleEditLead(event)">
+                <input type="hidden" id="editLeadId">
+                <div class="tabular-container">
+                    <table class="new-lead-table">
+                        <tbody>
+                            <tr>
+                                <td class="label-col"><label>Company Name <span class="required">*</span></label></td>
+                                <td colspan="3"><input type="text" id="editLeadCompanyName" name="companyName" class="full-width" required></td>
+                            </tr>
+                            <tr>
+                                <td class="label-col"><label>Customer Code</label></td>
+                                <td><input type="text" id="editLeadCustomerCode" name="customerCode" class="full-width"></td>
+                                <td class="label-col"><label>GST No.</label></td>
+                                <td><input type="text" id="editLeadGstNo" name="gstNo" class="full-width"></td>
+                            </tr>
+                            <tr>
+                                <td class="label-col"><label>Address</label></td>
+                                <td><input type="text" id="editLeadAddress" name="address" class="full-width"></td>
+                                <td class="label-col"><label>Category</label></td>
+                                <td>
+                                    <select id="editLeadCategory" name="category" class="full-width">
+                                        <option value="">Select Category</option>
+                                        <option value="Corporate Office">Corporate Office</option>
+                                        <option value="Plant / Site">Plant / Site</option>
+                                        <option value="Other office">Other office</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="label-col"><label>Contact Person</label></td>
+                                <td><input type="text" id="editLeadContactPerson" name="contactPerson" class="full-width"></td>
+                                <td class="label-col"><label>Designation</label></td>
+                                <td><input type="text" id="editLeadDesignation" name="designation" class="full-width" placeholder="e.g. CEO, Manager, Director"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="section-title">Contact Persons</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4">
+                                    <table class="contacts-inner-table" id="editContactPersonsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Designation</th>
+                                                <th>Mobile No.</th>
+                                                <th>Email Id</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="editContactPersonsBody">
+                                            <tr class="contact-row">
+                                                <td><input type="text" class="contact-input edit-contact-name"></td>
+                                                <td><input type="text" class="contact-input edit-contact-designation" placeholder="e.g. CEO, Manager"></td>
+                                                <td><input type="tel" class="contact-input edit-contact-mobile"></td>
+                                                <td><input type="email" class="contact-input edit-contact-email"></td>
+                                                <td><button type="button" class="btn btn-icon btn-add-contact" onclick="addEditContactRow()" title="Add Contact"><ion-icon name="add-circle-outline"></ion-icon></button></td>
+                                            </tr>
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="5" class="add-more-hint" style="text-align: right; font-size: 0.85em; color: #7f8c8d; padding-right: 15px;">* Keep Adding as many if required</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="label-col"><label>Mobile</label></td>
+                                <td><input type="tel" id="editLeadMobile" name="mobile" class="full-width"></td>
+                                <td class="label-col"><label>Email</label></td>
+                                <td><input type="email" id="editLeadEmail" name="email" class="full-width"></td>
+                            </tr>
+                            <tr>
+                                <td class="label-col"><label>Status</label></td>
+                                <td>
+                                    <select id="editLeadStatus" name="status" class="full-width">
+                                        <option value="New Lead">New Lead</option>
+                                        <option value="Discussion with client (Introduction)">Discussion with client (Introduction)</option>
+                                        <option value="Sent Company Profile">Sent Company Profile</option>
+                                        <option value="Sent Commercial">Sent Commercial</option>
+                                        <option value="Meeting done">Meeting done</option>
+                                        <option value="Commercial Finalised(Mail)">Commercial Finalised(Mail)</option>
+                                        <option value="Test Position Received">Test Position Received</option>
+                                        <option value="Agreement Signed">Agreement Signed</option>
+                                    </select>
+                                </td>
+                                <td class="label-col"><label>Assigned To <span class="required">*</span></label></td>
+                                <td>
+                                    <select id="editLeadAssignedTo" name="assignedTo" class="full-width" required>
+                                        <option value="">Select User</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="label-col"><label>Status Details / Communication History</label></td>
+                                <td colspan="3">
+                                    <div id="editLeadStatusUpdatesDisplay" class="status-updates-container"></div>
+                                    <textarea id="editLeadStatusDetails" name="newStatusUpdate" rows="2" class="full-width expandable-textarea" placeholder="Add new update/message here..."></textarea>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="label-col"><label>Remarks</label></td>
+                                <td colspan="3"><textarea id="editLeadRemarks" name="remarks" rows="3" class="full-width" placeholder="Write about the client here..."></textarea></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditLeadModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Lead</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Lead Modal -->
+    <div id="viewLeadModal" class="modal">
+        <div class="modal-content modal-short">
+            <div class="modal-header">
+                <h2>Lead Details</h2>
+                <button class="modal-close" onclick="closeViewLeadModal()">&times;</button>
+            </div>
+            <div id="viewLeadContent" class="lead-details-content"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeViewLeadModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Communication Modal -->
+    <div id="viewCommunicationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Communication Details</h2>
+                <button class="modal-close" onclick="closeViewCommunicationModal()">&times;</button>
+            </div>
+            <div id="viewCommunicationContent" class="lead-details-content"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeViewCommunicationModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Task</h2>
+                <button class="modal-close" onclick="closeAddTaskModal()">&times;</button>
+            </div>
+            <form id="addTaskForm" onsubmit="handleAddTask(event)">
+                <div class="form-group">
+                    <label>Lead <span style="font-size:11px;color:#9ca3af;font-weight:400;">(optional — defaults to Message)</span></label>
+                    <select name="lead" id="taskLead">
+                        <option value="">📩 Message (No Lead)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Action Type *</label>
+                    <select name="action" required>
+                        <option value="">Select Action</option>
+                        <option value="message" selected>📩 Normal Message</option>
+                        <option value="urgent-message">⚠️ Urgent Message</option>
+                        <option value="emergency-message">🚨 Emergency Message</option>
+                        <option value="call">Call</option>
+                        <option value="email">Email</option>
+                        <option value="meeting">Meeting</option>
+                        <option value="follow-up">Follow-up</option>
+                        <option value="demo">Demo</option>
+                        <option value="site-visit">Site Visit</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <textarea name="remarks" rows="2" placeholder="Additional notes..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Due Date *</label>
+                        <input type="datetime-local" name="dueDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select name="priority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Assigned To *</label>
+                    <select name="assignedTo" id="taskAssignedTo" required>
+                        <option value="">Select User</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status Details / First Message</label>
+                    <textarea name="statusDetails" rows="2" placeholder="Initial communication or notes..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddTaskModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Operation Modal -->
+    <div id="addOperationModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Add New Operation Ticket</h2>
+                <button class="modal-close" onclick="closeAddOperationModal()">&times;</button>
+            </div>
+            <form id="addOperationForm" onsubmit="handleAddOperation(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Client Name *</label>
+                        <input type="text" name="clientName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Company *</label>
+                        <input type="text" name="company" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" name="phone">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select name="category" required>
+                            <option value="support">Support</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="installation">Installation</option>
+                            <option value="complaint">Complaint</option>
+                            <option value="query">Query</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select name="priority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select name="status">
+                            <option value="new-request" selected>New Request</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="pending-parts">Pending Parts</option>
+                            <option value="completed">Completed</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Source</label>
+                        <select name="source">
+                            <option value="phone">Phone</option>
+                            <option value="email">Email</option>
+                            <option value="website">Website</option>
+                            <option value="chat">Chat</option>
+                            <option value="walk-in">Walk-in</option>
+                            <option value="referral">Referral</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Estimated Time (hours)</label>
+                        <input type="number" name="estimatedTime" min="0" step="0.5" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Assigned To</label>
+                        <select name="assignedTo" id="operationAssignedTo">
+                            <option value="">Unassigned</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" rows="2" placeholder="Describe the issue or request..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddOperationModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Ticket</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Operation Modal -->
+    <div id="editOperationModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Edit Operation Ticket</h2>
+                <button class="modal-close" onclick="closeEditOperationModal()">&times;</button>
+            </div>
+            <form id="editOperationForm" onsubmit="handleEditOperation(event)">
+                <input type="hidden" id="editOperationId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ticket Number</label>
+                        <input type="text" id="editOperationTicket" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Client Name *</label>
+                        <input type="text" id="editOperationClientName" name="clientName" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Company *</label>
+                        <input type="text" id="editOperationCompany" name="company" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="editOperationEmail" name="email" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="editOperationPhone" name="phone">
+                    </div>
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select id="editOperationCategory" name="category" required>
+                            <option value="support">Support</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="installation">Installation</option>
+                            <option value="complaint">Complaint</option>
+                            <option value="query">Query</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="editOperationPriority" name="priority">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="editOperationStatus" name="status">
+                            <option value="new-request">New Request</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="pending-parts">Pending Parts</option>
+                            <option value="completed">Completed</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Estimated Time (hours)</label>
+                        <input type="number" id="editOperationEstimatedTime" name="estimatedTime" min="0" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Actual Time (hours)</label>
+                        <input type="number" id="editOperationActualTime" name="actualTime" min="0" step="0.5">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Assigned To</label>
+                    <select id="editOperationAssignedTo" name="assignedTo">
+                        <option value="">Unassigned</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="editOperationDescription" name="description" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Resolution</label>
+                    <textarea id="editOperationResolution" name="resolution" rows="2"
+                        placeholder="Add resolution notes..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditOperationModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Ticket</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Operation Modal -->
+    <div id="viewOperationModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Operation Ticket Details</h2>
+                <button class="modal-close" onclick="closeViewOperationModal()">&times;</button>
+            </div>
+            <div id="viewOperationContent" class="view-details"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeViewOperationModal()">Close</button>
+                <button type="button" class="btn btn-primary" onclick="editOperationFromView()">Edit Ticket</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pipeline Settings Modal -->
+    <div id="pipelineSettingsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Manage Pipeline Stages</h2>
+                <button class="modal-close" onclick="closePipelineSettings()">&times;</button>
+            </div>
+            <div class="pipeline-manager">
+                <button class="btn btn-primary mb-20" onclick="addPipelineStage()">
+                    <ion-icon name="add-outline" class="icon-sm"></ion-icon> Add Stage
+                </button>
+                <div id="pipelineStagesList" class="pipeline-stages-list"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePipelineSettings()">Close</button>
+                <button class="btn btn-primary" onclick="savePipelineSettings()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Operations Pipeline Settings Modal -->
+    <div id="operationsPipelineSettingsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Manage Operations Pipeline Stages</h2>
+                <button class="modal-close" onclick="closeOperationsPipelineSettings()">&times;</button>
+            </div>
+            <div class="pipeline-manager">
+                <button class="btn btn-primary mb-20" onclick="addOperationsStage()">
+                    <ion-icon name="add-outline" class="icon-sm"></ion-icon> Add Stage
+                </button>
+                <div id="operationsPipelineStagesList" class="pipeline-stages-list"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeOperationsPipelineSettings()">Close</button>
+                <button class="btn btn-primary" onclick="saveOperationsPipelineSettings()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Task Modal -->
+    <div id="viewTaskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Task Details</h2>
+                <button class="modal-close" onclick="closeViewTaskModal()">&times;</button>
+            </div>
+            <div id="viewTaskContent" class="lead-details-content"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeViewTaskModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div id="editTaskModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Edit Task</h2>
+                <button class="modal-close" onclick="closeEditTaskModal()">&times;</button>
+            </div>
+            <form id="editTaskForm" onsubmit="handleEditTask(event)">
+                <input type="hidden" id="editTaskId">
+                <div class="form-group">
+                    <label>Action Type *</label>
+                    <select id="editTaskAction" name="action" required>
+                        <option value="">Select Action</option>
+                        <option value="message">📩 Normal Message</option>
+                        <option value="urgent-message">⚠️ Urgent Message</option>
+                        <option value="emergency-message">🚨 Emergency Message</option>
+                        <option value="call">Call</option>
+                        <option value="email">Email</option>
+                        <option value="meeting">Meeting</option>
+                        <option value="follow-up">Follow-up</option>
+                        <option value="demo">Demo</option>
+                        <option value="site-visit">Site Visit</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <textarea id="editTaskRemarks" name="remarks" rows="2" placeholder="Additional notes..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Due Date *</label>
+                        <input type="datetime-local" id="editTaskDueDate" name="dueDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="editTaskStatus" name="status">
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Assigned To *</label>
+                    <select id="editTaskAssignedTo" name="assignedTo" required>
+                        <option value="">Select User</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status Details / Communication History</label>
+                    <div id="editTaskStatusUpdatesDisplay" class="status-updates-container"></div>
+                    <textarea name="newStatusUpdate" rows="2" placeholder="Add new update/message here..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="editTaskNotes" name="notes" rows="2"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditTaskModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Send Email Modal -->
+    <div id="sendEmailModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>Send Email</h2>
+                <button class="modal-close" onclick="closeSendEmailModal()">&times;</button>
+            </div>
+            <form id="sendEmailForm" onsubmit="handleSendEmail(event)">
+                <input type="hidden" id="emailLeadId">
+                <div class="form-group">
+                    <label>To *</label>
+                    <input type="email" id="emailTo" name="to" required>
+                </div>
+                <div class="form-group">
+                    <label>CC</label>
+                    <input type="text" id="emailCc" name="cc" placeholder="Separate multiple emails with commas">
+                </div>
+                <div class="form-group">
+                    <label>Subject *</label>
+                    <input type="text" name="subject" required>
+                </div>
+                <div class="form-group">
+                    <label>Message *</label>
+                    <textarea name="content" rows="4" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeSendEmailModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><ion-icon name="send-outline"
+                            class="icon-sm"></ion-icon> Send Email</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Send WhatsApp Modal -->
+    <div id="sendWhatsAppModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Send WhatsApp Message</h2>
+                <button class="modal-close" onclick="closeSendWhatsAppModal()">&times;</button>
+            </div>
+            <form id="sendWhatsAppForm" onsubmit="handleSendWhatsApp(event)">
+                <input type="hidden" id="whatsappLeadId">
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" id="whatsappTo" name="to" required placeholder="+1234567890">
+                </div>
+                <div class="form-group">
+                    <label>Message *</label>
+                    <textarea name="content" rows="3" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeSendWhatsAppModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><ion-icon name="logo-whatsapp"
+                            class="icon-sm"></ion-icon> Send Message</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Log Call Modal -->
+    <div id="logCallModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Log Call</h2>
+                <button class="modal-close" onclick="closeLogCallModal()">&times;</button>
+            </div>
+            <form id="logCallForm" onsubmit="handleLogCall(event)">
+                <input type="hidden" id="callLeadId">
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" id="callTo" name="to" required placeholder="+1234567890">
+                </div>
+                <div class="form-group">
+                    <label>Call Duration (minutes)</label>
+                    <input type="number" name="duration" min="0" step="1" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Call Notes *</label>
+                    <textarea name="content" rows="3" required placeholder="Summary of the call..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeLogCallModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><ion-icon name="call-outline"
+                            class="icon-sm"></ion-icon> Log Call</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Log Meeting Modal -->
+    <div id="logMeetingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Log Meeting</h2>
+                <button class="modal-close" onclick="closeLogMeetingModal()">&times;</button>
+            </div>
+            <form id="logMeetingForm" onsubmit="handleLogMeeting(event)">
+                <input type="hidden" id="meetingLeadId">
+                <div class="form-group">
+                    <label>Meeting Duration (minutes)</label>
+                    <input type="number" name="duration" min="0" step="1" value="30">
+                </div>
+                <div class="form-group">
+                    <label>Attendees</label>
+                    <input type="text" name="attendees" placeholder="John Doe, Jane Smith">
+                </div>
+                <div class="form-group">
+                    <label>Meeting Notes *</label>
+                    <textarea name="content" rows="3" required
+                        placeholder="Meeting summary, key points discussed, action items..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeLogMeetingModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><ion-icon name="calendar-outline"
+                            class="icon-sm"></ion-icon> Log
+                        Meeting</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Upload File Modal -->
+    <div id="uploadFileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Upload File</h2>
+                <button class="modal-close" onclick="closeUploadFileModal()">&times;</button>
+            </div>
+            <form id="uploadFileForm" onsubmit="handleUploadFile(event)">
+                <input type="hidden" id="uploadLeadId">
+                <div class="form-group">
+                    <label>Select File *</label>
+                    <input type="file" id="fileInput" name="file" required>
+                    <small>Supported: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG (Max 10MB)</small>
+                </div>
+                <div class="form-group">
+                    <label>File Description</label>
+                    <input type="text" name="description" placeholder="e.g., Proposal, Contract, Invoice">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeUploadFileModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><ion-icon name="cloud-upload-outline"
+                            class="icon-sm"></ion-icon> Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit User Modal -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="userModalTitle">Add New User</h2>
+                <button class="modal-close" onclick="closeAddUserModal()">&times;</button>
+            </div>
+            <form id="addUserForm" onsubmit="handleAddUser(event)">
+                <input type="hidden" id="editUserId">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" name="fullName" id="userFullName" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" name="email" id="userEmail" required placeholder="john@company.com">
+                </div>
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" name="password" id="userPassword" required minlength="6"
+                        placeholder="Minimum 6 characters">
+                    <small id="passwordHint">Leave blank to keep current password when editing</small>
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" id="userUsername" placeholder="johndoe">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" name="phone" id="userPhone" placeholder="+1234567890">
+                </div>
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select name="role" id="userRole" required>
+                        <option value="">Select Role</option>
+                        <option value="staff">Staff</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
+                        <option value="superadmin" class="superadmin-only">Super Admin</option>
+                    </select>
+                    <small>
+                        <strong>Staff:</strong> Can update assigned leads (status & remarks only)<br>
+                        <strong>Manager:</strong> Team management & lead creation for own team<br>
+                        <strong>Admin:</strong> Department management, role assignment & reporting<br>
+                        <strong>Super Admin:</strong> Full system access including user creation & role assignment
+                    </small>
+                </div>
+                <div class="form-group" id="departmentSelectGroup" style="display: none;">
+                    <label>Department <span class="required">*</span></label>
+                    <select name="department" id="userDepartment">
+                        <option value="">Select Department</option>
+                        <option value="sales">Sales</option>
+                        <option value="operations">Operations</option>
+                    </select>
+                    <small>Select the department for this user</small>
+                </div>
+                <div class="form-group" id="managerSelectGroup" style="display: none;">
+                    <label>Assign to Manager</label>
+                    <select name="managerId" id="userManagerId">
+                        <option value="">No Manager</option>
+                    </select>
+                    <small>Select a manager to assign this user to their team</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddUserModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><ion-icon name="save-outline"
+                            class="icon-sm"></ion-icon> Save User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View User Modal -->
+    <div id="viewUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>User Details</h2>
+                <button class="modal-close" onclick="closeViewUserModal()">&times;</button>
+            </div>
+            <div id="viewUserContent"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeViewUserModal()">Close</button>
+                <button type="button" class="btn btn-primary" onclick="editUserFromView()"><ion-icon
+                        name="create-outline" class="icon-sm"></ion-icon>
+                    Edit</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/dashboard.js"></script>
+    <script src="/lead-analytics.js"></script>
+    <script>
+        // Initialize greeting
+        if (typeof updateGreeting === 'function') updateGreeting();
+
+        // Sync greeting name with logged-in user name
+        const _origSetUser = window.setCurrentUser;
+        window.setCurrentUser = function (user) {
+            if (_origSetUser) _origSetUser(user);
+            const nameEl = document.getElementById('greetingName');
+            if (nameEl && user && user.name) nameEl.textContent = user.name;
+            if (typeof updateGreeting === 'function') updateGreeting();
+        };
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('loginPassword');
+            const icon = document.querySelector('.password-toggle');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.setAttribute('name', 'eye-outline');
+            } else {
+                passwordInput.type = 'password';
+                icon.setAttribute('name', 'eye-off-outline');
+            }
+        }
+    </script>
+</body>
+
+</html>
