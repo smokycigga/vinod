@@ -720,7 +720,7 @@ async function loadRecentActivity() {
         container.innerHTML = activities.slice(0, 5).map(activity => `
             <div class="activity-item">
                 <div class="activity-icon">
-                    <ion-icon name="circle-outline" class="icon-sm"></ion-icon>
+                    <ion-icon name="ellipse-outline" class="icon-sm"></ion-icon>
                 </div>
                 <div class="activity-content">
                     <div class="activity-text">${activity.description || activity.action || 'Activity'}</div>
@@ -4528,7 +4528,7 @@ function renderNotifications(notifications) {
     if (notifications.length === 0) {
         list.innerHTML = `
             <div class="notification-empty">
-                <ion-icon name="bell-slash-outline" class="icon-sm"></ion-icon>
+                <ion-icon name="notifications-off-outline" class="icon-sm"></ion-icon>
                 <p>No notifications</p>
             </div>
         `;
@@ -6064,7 +6064,7 @@ async function openEditInvoiceModal(id) {
     document.getElementById('invoiceEditId').value = '';
     document.getElementById('invoiceForm').reset();
     document.getElementById('candidateRowsContainer').innerHTML =
-        '<div style="text-align:center;padding:16px;color:#999;font-size:13px;"><ion-icon name="spinner-outline" class="icon-sm"></ion-icon> Loading invoice data...</div>';
+        '<div style="text-align:center;padding:16px;color:#999;font-size:13px;"><ion-icon name="sync-outline" class="icon-sm"></ion-icon> Loading invoice data...</div>';
     document.getElementById('invCalcPreview').style.display = 'none';
     modal.style.display = 'flex';
 
@@ -6362,7 +6362,7 @@ function addCandidateRow(data = {}) {
                 style="background:none;border:1px solid #e74c3c;border-radius:6px;color:#e74c3c;padding:2px 8px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.2s;"
                 onmouseover="this.style.background='#e74c3c';this.style.color='white';"
                 onmouseout="this.style.background='none';this.style.color='#e74c3c';">
-                <ion-icon name="trash-alt-outline" class="icon-sm"></ion-icon> Remove
+                <ion-icon name="trash-outline" class="icon-sm"></ion-icon> Remove
             </button>
         </div>
         <div style="display:grid;grid-template-columns:2fr 1.5fr 0.8fr 1.2fr;gap:12px;margin-top:10px;">
