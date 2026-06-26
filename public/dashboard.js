@@ -1179,6 +1179,11 @@ function handleLeadRowClick(event, leadId) {
     viewLead(leadId);
 }
 
+function handleInvoiceRowClick(event, invoiceId) {
+    if (event.target.closest('button, a, input, select, textarea')) return;
+    viewInvoice(invoiceId);
+}
+
 
 // Tasks Management
 async function loadTasks() {
@@ -3901,7 +3906,7 @@ async function deleteLead(id) {
     // Check delete permission
     const deletePermission = getPermissionLevel('leads', 'delete');
     if (deletePermission === 'none') {
-        showNotification('You do not have permission to delete leads', 'error');
+        showNotification('You do not have permission to archive leads', 'error');
         return;
     }
 
@@ -3909,12 +3914,12 @@ async function deleteLead(id) {
     if (deletePermission === 'assigned') {
         const lead = allLeadsData.find(l => l._id === id);
         if (lead && lead.assignedTo !== currentUser._id.toString()) {
-            showNotification('You can only delete leads assigned to you', 'error');
+            showNotification('You can only archive leads assigned to you', 'error');
             return;
         }
     }
 
-    if (!confirm('Delete lead?')) return;
+    if (!confirm('Archive this lead? You can restore it later.')) return;
     try {
         const response = await fetch(API_BASE + '/leads/' + id, {
             method: 'DELETE',
@@ -3931,11 +3936,11 @@ async function deleteLead(id) {
         allLeadsData = allLeadsData.filter(l => l._id !== id);
         if (currentSection === 'pipeline') renderPipeline();
         else if (currentSection === 'leads') loadLeads();
-        showNotification('Lead deleted successfully', 'success');
+        showNotification('Lead archived successfully', 'success');
         loadLeads();
         loadDashboardData();
     } catch (error) {
-        showNotification('Error deleting lead: ' + error.message, 'error');
+        showNotification('Error archiving lead: ' + error.message, 'error');
     }
 }
 
@@ -5850,7 +5855,7 @@ async function loadInvoices() {
             const canDownloadPdf = isSuperAdmin || (isAdmin && (inv.approvalStatus === 'approved' || isDeveloperModeEnabled()));
             const displayTotal = (inv.receivableAmount === 0 && inv.paymentStatus !== 'paid') ? inv.netPayable : inv.receivableAmount;
             return `
-            <tr>
+            <tr class="clickable-row" onclick="handleInvoiceRowClick(event, '${inv._id}')">
                 <td><strong>${inv.invoiceNumber}</strong></td>
                 <td>${fmtD(inv.invoiceDate)}</td>
                 <td>${custName}</td>
@@ -5861,14 +5866,13 @@ async function loadInvoices() {
                 <td>${statusBadge(inv.paymentStatus)}</td>
                 <td><span style="display:inline-block;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;${inv.approvalStatus === 'approved' ? 'background:#d1fae5;color:#065f46;' : inv.approvalStatus === 'rejected' ? 'background:#fee2e2;color:#991b1b;' : 'background:#fef3c7;color:#92400e;'}">${inv.approvalStatus === 'approved' ? 'Approved' : inv.approvalStatus === 'rejected' ? 'Rejected' : 'Pending'}</span></td>
                 <td style="white-space:nowrap;text-align:center;">
-                    <button class="btn btn-sm btn-secondary" onclick="viewInvoice('${inv._id}')" title="View" style="padding:3px 5px;margin:0 1px;"><ion-icon name="eye-outline" style="font-size:14px;"></ion-icon></button>
-                    ${canEdit ? `<button class="btn btn-sm btn-primary" onclick="openEditInvoiceModal('${inv._id}')" title="Edit" style="padding:3px 5px;margin:0 1px;"><ion-icon name="create-outline" style="font-size:14px;"></ion-icon></button>` : ''}
-                    ${canDownloadPdf ? `<button class="btn btn-sm btn-success" onclick="downloadInvoicePDF('${inv._id}', '${inv.invoiceNumber}')" title="PDF" style="padding:3px 5px;margin:0 1px;"><ion-icon name="download-outline" style="font-size:14px;"></ion-icon></button>` : ''}
-                    ${inv.approvalStatus === 'approved' ? `<button class="btn btn-sm btn-info" onclick="openRecordPaymentModal('${inv._id}', ${displayTotal})" title="Payment Received" style="padding:3px 5px;margin:0 1px;"><ion-icon name="cash-outline" style="font-size:14px;"></ion-icon></button>` : ''}
-                    <button class="btn btn-sm btn-danger" onclick="deleteInvoice('${inv._id}')" title="Delete" style="padding:3px 5px;margin:0 1px;"><ion-icon name="close-outline" style="font-size:14px;"></ion-icon></button>
+                    ${canEdit ? `<button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); openEditInvoiceModal('${inv._id}')" title="Edit" style="padding:3px 5px;margin:0 1px;"><ion-icon name="create-outline" style="font-size:14px;"></ion-icon></button>` : ''}
+                    ${canDownloadPdf ? `<button class="btn btn-sm btn-success" onclick="event.stopPropagation(); downloadInvoicePDF('${inv._id}', '${inv.invoiceNumber}')" title="PDF" style="padding:3px 5px;margin:0 1px;"><ion-icon name="download-outline" style="font-size:14px;"></ion-icon></button>` : ''}
+                    ${inv.approvalStatus === 'approved' ? `<button class="btn btn-sm btn-info" onclick="event.stopPropagation(); openRecordPaymentModal('${inv._id}', ${displayTotal})" title="Payment Received" style="padding:3px 5px;margin:0 1px;"><ion-icon name="cash-outline" style="font-size:14px;"></ion-icon></button>` : ''}
+                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteInvoice('${inv._id}')" title="Archive" style="padding:3px 5px;margin:0 1px;"><ion-icon name="archive-outline" style="font-size:14px;"></ion-icon></button>
                     ${canApprove ? `
-                    <button class="btn btn-sm btn-success" onclick="approveInvoice('${inv._id}')" title="Approve" style="padding:3px 5px;margin:0 1px;"><ion-icon name="checkmark-outline" style="font-size:14px;"></ion-icon></button>
-                    <button class="btn btn-sm btn-danger" onclick="rejectInvoice('${inv._id}')" title="Reject" style="padding:3px 5px;margin:0 1px;"><ion-icon name="close-outline" style="font-size:14px;"></ion-icon></button>
+                    <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); approveInvoice('${inv._id}')" title="Approve" style="padding:3px 5px;margin:0 1px;"><ion-icon name="checkmark-outline" style="font-size:14px;"></ion-icon></button>
+                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); rejectInvoice('${inv._id}')" title="Reject" style="padding:3px 5px;margin:0 1px;"><ion-icon name="close-outline" style="font-size:14px;"></ion-icon></button>
                     ` : ''}
                 </td>
             </tr>`;
@@ -5984,7 +5988,7 @@ async function loadPendingApprovals() {
             const creatorName = creator.fullName || creator.username || creator.email || 'Unknown';
             const canApprove = canApproveInvoice(inv);
             return `
-            <tr>
+            <tr class="clickable-row" onclick="handleInvoiceRowClick(event, '${inv._id}')">
                 <td><strong>${inv.invoiceNumber}</strong></td>
                 <td>${fmtD(inv.invoiceDate)}</td>
                 <td>${inv.customerSnapshot?.name || inv.customer?.name || '—'}</td>
@@ -5992,10 +5996,9 @@ async function loadPendingApprovals() {
                 <td>${creatorName}</td>
                 <td>${fmtD(inv.dueDate)}</td>
                 <td style="white-space:nowrap;">
-                    <button class="btn btn-sm btn-secondary" onclick="viewInvoice('${inv._id}')" style="margin-right:6px;"><ion-icon name="eye-outline" class="icon-sm"></ion-icon> Preview</button>
                     ${canApprove ? `
-                    <button class="btn btn-sm btn-success" onclick="approveInvoice('${inv._id}')" style="margin-right:6px;"><ion-icon name="checkmark-outline" class="icon-sm"></ion-icon> Approve</button>
-                    <button class="btn btn-sm btn-danger" onclick="rejectInvoice('${inv._id}')"><ion-icon name="close-outline" class="icon-sm"></ion-icon> Reject</button>
+                    <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); approveInvoice('${inv._id}')" style="margin-right:6px;"><ion-icon name="checkmark-outline" class="icon-sm"></ion-icon> Approve</button>
+                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); rejectInvoice('${inv._id}')"><ion-icon name="close-outline" class="icon-sm"></ion-icon> Reject</button>
                     ` : '<span style="color:#9ca3af;font-size:12px;">Assigned to another approver</span>'}
                 </td>
             </tr>`;
@@ -6245,7 +6248,7 @@ async function handleSaveInvoice(e) {
 }
 
 async function deleteInvoice(id) {
-    if (!confirm('Delete this invoice? This cannot be undone.')) return;
+    if (!confirm('Archive this invoice? You can restore it later.')) return;
     try {
         const res = await fetch(`${API_BASE}/invoices/${id}`, {
             method: 'DELETE',
@@ -6253,7 +6256,7 @@ async function deleteInvoice(id) {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message);
-        showNotification('Invoice deleted.', 'success');
+        showNotification('Invoice archived.', 'success');
         loadInvoices();
         loadPendingApprovalCount();
         loadInvoiceStats();

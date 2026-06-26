@@ -31,12 +31,12 @@ function leadToExportRow(lead) {
 }
 
 async function buildLeadAccessQuery(req) {
-    let query = {};
+    let query = { archivedAt: { $exists: false } };
     const mongoose = require('mongoose');
     const User = require('../models/User');
 
     if (req.user.role === 'superadmin') {
-        return {};
+        return query;
     }
 
     if (req.user.role === 'admin') {
@@ -59,6 +59,7 @@ async function buildLeadAccessQuery(req) {
             .map(id => new mongoose.Types.ObjectId(id));
 
         return {
+            ...query,
             $or: [
                 { user: { $in: allDeptUserIds } },
                 { assignedTo: { $in: allDeptUserIds } }
@@ -72,6 +73,7 @@ async function buildLeadAccessQuery(req) {
             .map(id => new mongoose.Types.ObjectId(id));
 
         return {
+            ...query,
             $or: [
                 { user: { $in: teamIds } },
                 { assignedTo: { $in: teamIds } }
@@ -81,6 +83,7 @@ async function buildLeadAccessQuery(req) {
 
     const staffId = new mongoose.Types.ObjectId(req.user._id);
     return {
+        ...query,
         $or: [
             { assignedTo: staffId },
             { user: staffId }
@@ -148,7 +151,7 @@ router.use(auth);
 // Get all leads with permission-based filtering
 router.get('/', async (req, res) => {
     try {
-        let query = {};
+        let query = { archivedAt: { $exists: false } };
         const mongoose = require('mongoose');
         const User = require('../models/User');
 
@@ -156,7 +159,6 @@ router.get('/', async (req, res) => {
 
         // Apply role-based filtering with hierarchy
         if (req.user.role === 'superadmin') {
-            query = {};
             console.log('[DEBUG] superadmin: viewing all leads');
         } else if (req.user.role === 'admin') {
             const deptUsers = await User.find({ department: req.user.department }).select('_id');
@@ -177,6 +179,7 @@ router.get('/', async (req, res) => {
             const allDeptUserIds = [...new Set([...deptUserIds, ...managerIds, ...staffIds])].map(id => new mongoose.Types.ObjectId(id));
 
             query = {
+                ...query,
                 $or: [
                     { user: { $in: allDeptUserIds } },
                     { assignedTo: { $in: allDeptUserIds } }
@@ -188,6 +191,7 @@ router.get('/', async (req, res) => {
             const teamIds = [req.user._id, ...teamMemberIds.map(member => member._id)].map(id => new mongoose.Types.ObjectId(id));
             
             query = {
+                ...query,
                 $or: [
                     { user: { $in: teamIds } },
                     { assignedTo: { $in: teamIds } }
@@ -198,6 +202,7 @@ router.get('/', async (req, res) => {
             // Staff Role
             const staffId = new mongoose.Types.ObjectId(req.user._id);
             query = {
+                ...query,
                 $or: [
                     { assignedTo: staffId },
                     { user: staffId }
@@ -228,7 +233,11 @@ router.get('/', async (req, res) => {
 // Get leads by status for the logged-in user
 router.get('/status/:status', async (req, res) => {
     try {
-        const leads = await Lead.find({ user: req.user._id, status: req.params.status }).sort({ createdAt: -1 });
+        const leads = await Lead.find({
+            user: req.user._id,
+            status: req.params.status,
+            archivedAt: { $exists: false }
+        }).sort({ createdAt: -1 });
         res.json(leads);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -723,8 +732,10 @@ router.delete('/:id', async (req, res) => {
             return res.status(403).json({ message: 'Access denied. You do not have permission to delete this lead.' });
         }
 
-        await Lead.findByIdAndDelete(req.params.id);
-        console.log('[DELETE LEAD] Lead deleted from DB');
+        lead.archivedAt = new Date();
+        lead.archivedBy = req.user._id;
+        await lead.save();
+        console.log('[DELETE LEAD] Lead archived');
 
         // Log activity
         await new ActivityLog({
@@ -732,15 +743,46 @@ router.delete('/:id', async (req, res) => {
             action: 'lead_deleted',
             module: 'leads',
             targetId: req.params.id,
-            description: `Deleted lead: ${lead.companyName || lead.name || 'Unknown'}`,
+            description: `Archived lead: ${lead.companyName || lead.name || 'Unknown'}`,
             metadata: { companyName: lead.companyName }
         }).save();
         console.log('[DELETE LEAD] Activity logged');
 
-        res.json({ message: 'Lead deleted successfully' });
+        res.json({ message: 'Lead archived successfully' });
     } catch (error) {
         console.error('[DELETE LEAD] Error:', error);
         res.status(500).json({ message: 'Error deleting lead', error: error.message });
+    }
+});
+
+// Restore an archived lead
+router.post('/:id/restore', async (req, res) => {
+    try {
+        if (req.user.role !== 'superadmin' && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Only admins can restore leads.' });
+        }
+
+        const lead = await Lead.findByIdAndUpdate(
+            req.params.id,
+            { $unset: { archivedAt: '', archivedBy: '' }, updatedAt: Date.now() },
+            { new: true }
+        );
+
+        if (!lead) return res.status(404).json({ message: 'Lead not found' });
+
+        await new ActivityLog({
+            user: req.user._id,
+            action: 'lead_updated',
+            module: 'leads',
+            targetId: req.params.id,
+            description: `Restored lead: ${lead.companyName || lead.name || 'Unknown'}`,
+            metadata: { companyName: lead.companyName }
+        }).save();
+
+        res.json({ message: 'Lead restored successfully', lead });
+    } catch (error) {
+        console.error('[RESTORE LEAD] Error:', error);
+        res.status(500).json({ message: 'Error restoring lead', error: error.message });
     }
 });
 

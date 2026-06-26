@@ -3,6 +3,7 @@ const router = express.Router();
 const PDFDocument = require('pdfkit');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const multer = require('multer');
 const auth = require('../middleware/auth');
 const Invoice = require('../models/Invoice');
@@ -41,6 +42,17 @@ function canAccessInvoice(req, invoice) {
     if (req.user.role === 'superadmin') return true;
     if (req.user.role === 'admin') return true;
     return invoice.createdBy?.toString() === req.user._id.toString();
+}
+
+function getSignedPdfDir() {
+    return process.env.VERCEL
+        ? path.join(os.tmpdir(), 'uploads', 'signed')
+        : path.join(__dirname, '..', 'uploads', 'signed');
+}
+
+function getSignedPdfPath(signedPdfUrl) {
+    if (!signedPdfUrl) return null;
+    return path.join(__dirname, '..', signedPdfUrl);
 }
 
 const KOMAL_EMAIL = 'komal@kenmccoy.in';
@@ -292,7 +304,7 @@ router.post('/customers/:id/restore', superadminOnly, async (req, res) => {
 router.get('/', async (req, res) => {
     try {
         const { status, customerId, from, to, search, approvalStatus } = req.query;
-        let filter = {};
+        let filter = { archivedAt: { $exists: false } };
 
         // Only superadmin can see all invoices; everyone else sees only their own.
         if (req.user.role !== 'superadmin') {
@@ -365,7 +377,9 @@ router.get('/', async (req, res) => {
 router.get('/stats', async (req, res) => {
     try {
         const today = new Date();
-        const filter = req.user.role === 'superadmin' ? {} : { createdBy: req.user._id };
+        const filter = req.user.role === 'superadmin'
+            ? { archivedAt: { $exists: false } }
+            : { createdBy: req.user._id, archivedAt: { $exists: false } };
 
         // Auto-update overdue (for relevant invoices)
         await Invoice.updateMany(
@@ -806,7 +820,7 @@ router.put('/:id', async (req, res) => {
 
             // Clear cached signed PDF so next download regenerates with updated data
             if (invoice.signedPdfUrl) {
-                const oldPdfPath = path.join(__dirname, '..', invoice.signedPdfUrl);
+                const oldPdfPath = getSignedPdfPath(invoice.signedPdfUrl);
                 try { if (fs.existsSync(oldPdfPath)) fs.unlinkSync(oldPdfPath); } catch (e) { /* ignore */ }
                 invoice.signedPdfUrl = undefined;
             }
@@ -840,14 +854,30 @@ router.delete('/:id', async (req, res) => {
             return res.status(403).json({ message: 'Cannot delete an invoice that is already processed.' });
         }
 
-        await Invoice.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Invoice deleted.' });
+        invoice.archivedAt = new Date();
+        invoice.archivedBy = req.user._id;
+        await invoice.save();
+        res.json({ message: 'Invoice archived.' });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
 
 // PATCH /api/invoices/:id/payment  — record payment received
+router.post('/:id/restore', adminOnly, async (req, res) => {
+    try {
+        const invoice = await Invoice.findByIdAndUpdate(
+            req.params.id,
+            { $unset: { archivedAt: '', archivedBy: '' }, updatedAt: Date.now() },
+            { new: true }
+        );
+        if (!invoice) return res.status(404).json({ message: 'Invoice not found.' });
+        res.json({ message: 'Invoice restored.', invoice });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 router.patch('/:id/payment', async (req, res) => {
     try {
         const { amount, date, notes } = req.body;
@@ -935,7 +965,7 @@ router.post('/:id/approve', async (req, res) => {
         const template = settings?.invoiceDefaults?.defaultTemplate || 'image1';
         const settingsSealImage = settings?.invoiceDefaults?.defaultSealUrl || null;
 
-        const uploadsDir = path.join(__dirname, '..', 'uploads', 'signed');
+        const uploadsDir = getSignedPdfDir();
         if (!fs.existsSync(uploadsDir)) {
             fs.mkdirSync(uploadsDir, { recursive: true });
         }
@@ -947,7 +977,9 @@ router.post('/:id/approve', async (req, res) => {
 
         await generateInvoicePDF(invoice, writeStream, { isSigned: true, template, settingsSealImage });
 
-        invoice.signedPdfUrl = `/uploads/signed/${filename}`;
+        if (!process.env.VERCEL) {
+            invoice.signedPdfUrl = `/uploads/signed/${filename}`;
+        }
         await invoice.save();
 
         if (invoice.createdBy) {
@@ -1033,10 +1065,10 @@ router.get('/:id/pdf', async (req, res) => {
         }
 
         // Serve cached signed PDF only if invoice hasn't been edited since it was generated
-        if (invoice.approvalStatus === 'approved' && invoice.signedPdfUrl) {
+        if (!process.env.VERCEL && invoice.approvalStatus === 'approved' && invoice.signedPdfUrl) {
             const cachedIsStale = invoice.lastEditedAt && invoice.approvedAt && new Date(invoice.lastEditedAt) > new Date(invoice.approvedAt);
             if (!cachedIsStale) {
-                const filePath = path.join(__dirname, '..', invoice.signedPdfUrl);
+                const filePath = getSignedPdfPath(invoice.signedPdfUrl);
                 if (fs.existsSync(filePath)) {
                     const safeNum = invoice.invoiceNumber.replace(/\//g, '-');
                     return res.download(filePath, `Invoice-${safeNum}-SIGNED.pdf`);
@@ -1044,7 +1076,7 @@ router.get('/:id/pdf', async (req, res) => {
             }
             // Stale or file missing — clear cached reference and regenerate below
             if (invoice.signedPdfUrl) {
-                const oldPath = path.join(__dirname, '..', invoice.signedPdfUrl);
+                const oldPath = getSignedPdfPath(invoice.signedPdfUrl);
                 try { if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath); } catch (e) { /* ignore */ }
                 invoice.signedPdfUrl = undefined;
             }
@@ -1066,14 +1098,16 @@ router.get('/:id/pdf', async (req, res) => {
             }
 
             // Save regenerated PDF to disk for future downloads
-            const uploadsDir = path.join(__dirname, '..', 'uploads', 'signed');
+            const uploadsDir = getSignedPdfDir();
             if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
             const safeNum2 = invoice.invoiceNumber.replace(/\//g, '-');
             const filename = `Invoice-${safeNum2}-SIGNED-${Date.now()}.pdf`;
             const filePath = path.join(uploadsDir, filename);
             const writeStream = fs.createWriteStream(filePath);
             await generateInvoicePDF(invoice, writeStream, pdfOptions);
-            invoice.signedPdfUrl = `/uploads/signed/${filename}`;
+            if (!process.env.VERCEL) {
+                invoice.signedPdfUrl = `/uploads/signed/${filename}`;
+            }
             await invoice.save();
             return res.download(filePath, `Invoice-${safeNum2}-SIGNED.pdf`);
         }

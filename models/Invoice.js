@@ -212,6 +212,13 @@ const invoiceSchema = new mongoose.Schema({
     approvedAt: {
         type: Date
     },
+    archivedAt: {
+        type: Date
+    },
+    archivedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
     createdAt: {
         type: Date,
         default: Date.now
