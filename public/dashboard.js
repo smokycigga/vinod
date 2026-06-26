@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup drag and drop event delegation
     setupDragAndDropDelegation();
+    setupGlobalSearch();
 
     // Setup role selection event listener
     const userRoleSelect = document.getElementById('userRole');
@@ -263,6 +264,68 @@ function capitalizeRole(role) {
     if (role === 'manager') return 'Manager';
     if (role === 'staff') return 'Staff';
     return role.charAt(0).toUpperCase() + role.slice(1);
+}
+
+function includesSearch(value, term) {
+    return String(value || '').toLowerCase().includes(term);
+}
+
+function leadMatchesSearch(lead, term) {
+    const firstContact = Array.isArray(lead.contacts) && lead.contacts.length > 0 ? lead.contacts[0] : {};
+    const assignedUser = lead.assignedTo?.fullName || lead.assignedTo?.email || '';
+    return [
+        lead.companyName,
+        lead.contactPerson || firstContact.name,
+        lead.designation || firstContact.designation,
+        lead.email || firstContact.email,
+        lead.mobile || firstContact.mobile,
+        lead.status,
+        assignedUser
+    ].some(value => includesSearch(value, term));
+}
+
+function taskMatchesSearch(task, term) {
+    const assignedUser = task.assignedTo?.fullName || task.assignedTo?.email || '';
+    const leadName = task.lead?.companyName || task.lead?.contactPerson || '';
+    return [
+        task.action,
+        leadName,
+        assignedUser,
+        task.status,
+        task.notes
+    ].some(value => includesSearch(value, term));
+}
+
+function filterVisibleTaskRows(term) {
+    document.querySelectorAll('#tasksTableBody tr').forEach(row => {
+        row.style.display = !term || row.textContent.toLowerCase().includes(term) ? '' : 'none';
+    });
+}
+
+function setupGlobalSearch() {
+    const input = document.getElementById('globalSearch');
+    if (!input) return;
+
+    input.addEventListener('input', async () => {
+        const term = input.value.trim().toLowerCase();
+
+        if (currentSection === 'tasks') {
+            filterVisibleTaskRows(term);
+            return;
+        }
+
+        if (currentSection !== 'leads') {
+            showSection('leads');
+        }
+
+        if (!allLeadsData.length) {
+            await loadLeads();
+        }
+
+        filteredLeadsData = term ? allLeadsData.filter(lead => leadMatchesSearch(lead, term)) : [...allLeadsData];
+        currentLeadsPage = 1;
+        renderLeadsTable();
+    });
 }
 
 // Helper function to check if a lead should be treated as a client
