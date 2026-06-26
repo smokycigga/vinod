@@ -6520,7 +6520,7 @@ async function loadInvoiceCustomers() {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;">Loading...</td></tr>';
     });
     try {
-        const res = await fetch(`${API_BASE}/invoices/customers`, {
+        const res = await fetch(`${API_BASE}/invoices/customers?archived=1`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         if (!res.ok) throw new Error('Failed to load customers');
@@ -6534,7 +6534,7 @@ async function loadInvoiceCustomers() {
             return;
         }
         const html = customers.map(c => `
-            <tr>
+            <tr${c.archivedAt ? ' style="opacity:0.55;"' : ''}>
                 <td><strong>${c.customerId}</strong></td>
                 <td>${c.name}</td>
                 <td style="font-size:12px;">${c.gstNo || '—'}</td>
@@ -6542,10 +6542,11 @@ async function loadInvoiceCustomers() {
                 <td>${c.email || '—'}</td>
                 <td>${c.vendorCode || 'NA'}</td>
                 <td>
-                    ${c.isLeadClient ? 
-                      `<span style="font-size:11px;color:#8b5cf6;background:#ede9fe;padding:4px 8px;border-radius:12px;font-weight:600;">CRM Client</span>` : 
-                      `<button class="btn btn-sm btn-primary" onclick="openEditCustomerModal('${c._id}')"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>
-                       <button class="btn btn-sm btn-danger" onclick="deleteCustomer('${c._id}')"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>`
+                    ${c.archivedAt
+                        ? `<button class="btn btn-sm btn-success" onclick="restoreCustomer('${c._id}')"><ion-icon name="refresh-outline" class="icon-sm"></ion-icon> Restore</button>`
+                        : `${c.isLeadClient ? `<span style="font-size:11px;color:#8b5cf6;background:#ede9fe;padding:4px 8px;border-radius:12px;font-weight:600;">CRM Client</span>` : ''}
+                           <button class="btn btn-sm btn-primary" onclick="openEditCustomerModal('${c._id}')"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>
+                           ${!c.isLeadClient ? `<button class="btn btn-sm btn-danger" onclick="deleteCustomer('${c._id}')"><ion-icon name="archive-outline" class="icon-sm"></ion-icon></button>` : ''}`
                     }
                 </td>
             </tr>`).join('');
@@ -6562,7 +6563,9 @@ async function loadInvoiceCustomers() {
 function openCreateCustomerModal() {
     document.getElementById('custModalTitle').textContent = 'Add Customer';
     document.getElementById('custEditId').value = '';
+    document.getElementById('custSource').value = '';
     document.getElementById('invoiceCustomerForm').reset();
+    document.getElementById('custId').disabled = false;
     document.getElementById('custVendor').value = 'NA';
     document.getElementById('invoiceCustomerModal').style.display = 'flex';
 }
@@ -6572,7 +6575,9 @@ function openEditCustomerModal(id) {
     if (!cust) { showNotification('Customer data not loaded', 'error'); return; }
     document.getElementById('custModalTitle').textContent = 'Edit Customer';
     document.getElementById('custEditId').value = cust._id;
+    document.getElementById('custSource').value = cust.isLeadClient ? 'lead' : '';
     document.getElementById('custId').value = cust.customerId;
+    document.getElementById('custId').disabled = !!cust.isLeadClient;
     document.getElementById('custName').value = cust.name;
     document.getElementById('custAddress').value = cust.address || '';
     document.getElementById('custContact').value = cust.contactNo || '';
@@ -6584,11 +6589,13 @@ function openEditCustomerModal(id) {
 
 function closeCustomerModal() {
     document.getElementById('invoiceCustomerModal').style.display = 'none';
+    document.getElementById('custId').disabled = false;
 }
 
 async function handleSaveCustomer(e) {
     e.preventDefault();
     const id = document.getElementById('custEditId').value;
+    const source = document.getElementById('custSource').value;
     const payload = {
         customerId: document.getElementById('custId').value.trim().toUpperCase(),
         name: document.getElementById('custName').value.trim(),
@@ -6598,13 +6605,26 @@ async function handleSaveCustomer(e) {
         gstNo: document.getElementById('custGst').value.trim().toUpperCase(),
         vendorCode: document.getElementById('custVendor').value.trim() || 'NA'
     };
-    const url = id ? `${API_BASE}/invoices/customers/${id}` : `${API_BASE}/invoices/customers`;
+    const url = source === 'lead'
+        ? `${API_BASE}/leads/${id}`
+        : (id ? `${API_BASE}/invoices/customers/${id}` : `${API_BASE}/invoices/customers`);
     const method = id ? 'PUT' : 'POST';
+    const body = source === 'lead'
+        ? {
+            customerCode: payload.customerId,
+            companyName: payload.name,
+            address: payload.address,
+            mobile: payload.contactNo,
+            email: payload.email,
+            gstNo: payload.gstNo,
+            status: 'Agreement Signed'
+        }
+        : payload;
     try {
         const res = await fetch(url, {
             method,
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(body)
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Failed to save');
@@ -6618,7 +6638,7 @@ async function handleSaveCustomer(e) {
 }
 
 async function deleteCustomer(id) {
-    if (!confirm('Delete this customer? Only possible if no invoices exist for them.')) return;
+    if (!confirm('Archive this customer? You can restore it later.')) return;
     try {
         const res = await fetch(`${API_BASE}/invoices/customers/${id}`, {
             method: 'DELETE',
@@ -6626,8 +6646,25 @@ async function deleteCustomer(id) {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message);
-        showNotification('Customer deleted.', 'success');
+        showNotification('Customer archived.', 'success');
         loadInvoiceCustomers();
+        loadInvoiceCustomerDropdown();
+    } catch (e) {
+        showNotification('Error: ' + e.message, 'error');
+    }
+}
+
+async function restoreCustomer(id) {
+    try {
+        const res = await fetch(`${API_BASE}/invoices/customers/${id}/restore`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        showNotification('Customer restored.', 'success');
+        loadInvoiceCustomers();
+        loadInvoiceCustomerDropdown();
     } catch (e) {
         showNotification('Error: ' + e.message, 'error');
     }

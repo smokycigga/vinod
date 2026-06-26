@@ -36,6 +36,13 @@ const invoiceCustomerSchema = new mongoose.Schema({
         trim: true,
         default: 'NA'
     },
+    archivedAt: {
+        type: Date
+    },
+    archivedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
     createdAt: {
         type: Date,
         default: Date.now

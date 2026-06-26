@@ -186,13 +186,14 @@ router.delete('/billing-companies/:id', superadminOnly, async (req, res) => {
 // GET /api/invoices/customers  — list all customers
 router.get('/customers', async (req, res) => {
     try {
-        const customers = await InvoiceCustomer.find().lean();
+        const includeArchived = req.query.archived === '1' || req.query.archived === 'true';
+        const customers = await InvoiceCustomer.find(includeArchived ? {} : { archivedAt: { $exists: false } }).lean();
 
         // Fetch CRM clients from Leads. A lead becomes a client only after a
         // client status plus an agreement/contract attachment.
         const clients = await Lead.find(leadClientQuery()).lean();
 
-        const existingNames = new Set(customers.map(c => c.name.toLowerCase()));
+        const existingNames = new Set(customers.filter(c => !c.archivedAt).map(c => c.name.toLowerCase()));
 
         const mappedClients = clients
             .filter(client => {
@@ -210,7 +211,8 @@ router.get('/customers', async (req, res) => {
                     email: client.email || '',
                     gstNo: client.gstNo || '',
                     vendorCode: 'NA',
-                    isLeadClient: true
+                    isLeadClient: true,
+                    source: 'lead'
                 };
             });
 
@@ -256,13 +258,27 @@ router.put('/customers/:id', superadminOnly, async (req, res) => {
 // DELETE /api/invoices/customers/:id  — delete customer
 router.delete('/customers/:id', superadminOnly, async (req, res) => {
     try {
-        const inUse = await Invoice.exists({ customer: req.params.id });
-        if (inUse) {
-            return res.status(400).json({ message: 'Cannot delete customer — invoices exist for this customer.' });
-        }
-        const customer = await InvoiceCustomer.findByIdAndDelete(req.params.id);
+        const customer = await InvoiceCustomer.findByIdAndUpdate(
+            req.params.id,
+            { archivedAt: new Date(), archivedBy: req.user._id, updatedAt: Date.now() },
+            { new: true }
+        );
         if (!customer) return res.status(404).json({ message: 'Customer not found.' });
-        res.json({ message: 'Customer deleted.' });
+        res.json({ message: 'Customer archived.', customer });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+router.post('/customers/:id/restore', superadminOnly, async (req, res) => {
+    try {
+        const customer = await InvoiceCustomer.findByIdAndUpdate(
+            req.params.id,
+            { $unset: { archivedAt: '', archivedBy: '' }, updatedAt: Date.now() },
+            { new: true }
+        );
+        if (!customer) return res.status(404).json({ message: 'Customer not found.' });
+        res.json({ message: 'Customer restored.', customer });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
