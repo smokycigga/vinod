@@ -269,8 +269,7 @@ function capitalizeRole(role) {
 function isLeadClient(lead) {
     if (!lead || !lead.status) return false;
     const status = String(lead.status).toLowerCase();
-    const hasAgreement = Array.isArray(lead.attachments) && lead.attachments.length > 0;
-    const res = status === 'client' || status === 'converted client' || (status === 'agreement signed' && hasAgreement);
+    const res = status === 'client' || status === 'converted client' || status === 'agreement signed';
     if (res) {
         console.warn(`[CLIENT_IDENTIFIED] ${lead.companyName} | Status: ${lead.status}`);
     }

@@ -38,9 +38,7 @@ function isLeadClient(lead) {
     if (!status) return false;
 
     const explicitClientStatus = status === 'client' || status === 'converted client' || status === 'converted-to-client';
-    const agreementSignedStatus = status === 'agreement signed';
-
-    return explicitClientStatus || (agreementSignedStatus && hasAgreementAttachment(lead));
+    return explicitClientStatus || status === 'agreement signed';
 }
 
 function leadClientQuery() {
@@ -48,10 +46,7 @@ function leadClientQuery() {
         $or: [
             { status: { $regex: /^client$/i } },
             { status: { $regex: /^converted client$/i } },
-            {
-                status: { $regex: /^agreement signed$/i },
-                attachments: { $exists: true, $ne: [] }
-            }
+            { status: { $regex: /^agreement signed$/i } }
         ]
     };
 }
