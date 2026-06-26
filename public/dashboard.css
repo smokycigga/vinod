@@ -4554,6 +4554,57 @@ hr {
   }
 }
 
+@media (max-width: 640px) {
+  .login-split-overlay {
+    align-items: stretch;
+    justify-content: stretch;
+    background: #f8e8aa;
+  }
+
+  .login-split-container {
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .login-left-panel {
+    display: none;
+  }
+
+  .login-right-panel {
+    min-height: 100dvh;
+    padding: 24px 20px;
+    align-items: flex-start;
+  }
+
+  .login-form-container {
+    max-width: none;
+  }
+
+  .brand-header {
+    margin-bottom: 24px !important;
+  }
+
+  .login-welcome {
+    margin-bottom: 24px;
+  }
+
+  .login-welcome h2 {
+    font-size: 24px;
+  }
+
+  .modern-login-form {
+    gap: 14px;
+  }
+
+  .login-footer {
+    margin-top: 28px;
+  }
+}
+
 /* --- USER MANAGEMENT MODERN TABLE --- */
 .user-management-table {
   width: 100%;
