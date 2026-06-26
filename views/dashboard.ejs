@@ -358,6 +358,15 @@
                         style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;"></ion-icon>
                     <p>No potential customers found matching your criteria</p>
                 </div>
+                <div class="pagination-container" style="display: none;">
+                    <button id="prevPageBtn" class="btn-page" onclick="prevLeadPage()" title="Previous page">
+                        <ion-icon name="chevron-back-outline"></ion-icon>
+                    </button>
+                    <div id="leadPageNumbers" class="page-numbers"></div>
+                    <button id="nextPageBtn" class="btn-page" onclick="nextLeadPage()" title="Next page">
+                        <ion-icon name="chevron-forward-outline"></ion-icon>
+                    </button>
+                </div>
             </div>
         </section>
 
