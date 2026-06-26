@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const dns = require('dns');
+const os = require('os');
 const multer = require('multer');
 require('dotenv').config();
 const session = require('express-session');
@@ -14,7 +15,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, 'uploads');
+const uploadsDir = process.env.VERCEL ? path.join(os.tmpdir(), 'uploads') : path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
 }
@@ -52,18 +53,18 @@ const upload = multer({
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(express.static('public', {
+app.use(express.static(path.join(__dirname, 'public'), {
     setHeaders: (res, path) => {
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     }
 }));
-app.use('/uploads', express.static('uploads')); // Serve uploaded files
+app.use('/uploads', express.static(uploadsDir)); // Serve uploaded files
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(session({ secret: 'crm_admin_secret', resave: false, saveUninitialized: true }));
 
 // MongoDB Connection
-const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/crm_sales';
+const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || (process.env.VERCEL ? '' : 'mongodb://localhost:27017/crm_sales');
 const dnsServers = (process.env.DNS_SERVERS || '8.8.8.8,1.1.1.1')
     .split(',')
     .map((server) => server.trim())
@@ -82,17 +83,21 @@ if (!process.env.MONGODB_URI && process.env.MONGO_URI) {
     console.log('Using MONGO_URI from .env for MongoDB connection.');
 }
 
-if (!process.env.MONGODB_URI && !process.env.MONGO_URI) {
+if (!mongoUri) {
+    console.error('MONGODB_URI/MONGO_URI is required in this environment.');
+} else if (!process.env.MONGODB_URI && !process.env.MONGO_URI) {
     console.warn('No MONGODB_URI/MONGO_URI found. Falling back to local MongoDB at mongodb://localhost:27017/crm_sales');
 }
 
-mongoose.connect(mongoUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).catch((error) => {
-    console.error('Initial MongoDB connection failed:', error.message);
-    process.exit(1);
-});
+if (mongoUri) {
+    mongoose.connect(mongoUri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    }).catch((error) => {
+        console.error('Initial MongoDB connection failed:', error.message);
+        if (!process.env.VERCEL) process.exit(1);
+    });
+}
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
@@ -253,6 +258,10 @@ app.get('/pipeline', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-}); 
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
+
+module.exports = app;
