@@ -154,6 +154,7 @@ app.use('/api/invoices', invoiceRoutes);
 // File upload endpoint
 const auth = require('./middleware/auth');
 const Lead = require('./models/Lead');
+const { isAgreementAttachment, normalizeLeadClientFields } = require('./utils/leadClient');
 
 app.post('/api/upload', auth, upload.single('file'), async (req, res) => {
     try {
@@ -199,6 +200,26 @@ app.post('/api/upload', auth, upload.single('file'), async (req, res) => {
             performedBy: req.user._id,
             metadata: { filename: req.file.originalname, size: req.file.size }
         });
+
+        if (lead.status !== 'Agreement Signed') {
+            const oldStatus = lead.status;
+            lead.status = 'Agreement Signed';
+            lead.statusUpdates.push({
+                text: `Agreement uploaded: ${req.file.originalname}`,
+                authorName: req.user.fullName || req.user.email || 'Unknown',
+                timestamp: new Date()
+            });
+            lead.timeline.push({
+                action: 'status_changed',
+                description: `Status changed from ${oldStatus || 'Unknown'} to Agreement Signed after agreement upload`,
+                performedBy: req.user._id,
+                metadata: { oldStatus, newStatus: 'Agreement Signed', filename: req.file.originalname }
+            });
+        }
+
+        if (lead.status === 'Agreement Signed') {
+            normalizeLeadClientFields(lead);
+        }
 
         await lead.save();
 

@@ -56,6 +56,11 @@ const invoiceSchema = new mongoose.Schema({
         trim: true,
         default: 'NA'
     },
+    vendorCode: {
+        type: String,
+        trim: true,
+        default: 'NA'
+    },
     poId: {
         type: String,
         trim: true
@@ -200,6 +205,10 @@ const invoiceSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
+    assignedApprover: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
     approvedAt: {
         type: Date
     },
@@ -238,7 +247,10 @@ invoiceSchema.pre('save', function (next) {
     this.totalAmount = Math.round((this.chargeableAmount + this.totalGst) * 100) / 100;
     this.netPayable = Math.round(this.totalAmount);
 
-    // NOTE: Due date is now mandatory and must be provided by user (no auto-calculation)
+    // Initialize receivableAmount to netPayable on new invoice creation if not set
+    if (this.isNew && (!this.receivableAmount || this.receivableAmount === 0)) {
+        this.receivableAmount = this.netPayable;
+    }
 
     next();
 });

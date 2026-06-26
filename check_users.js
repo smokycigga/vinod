@@ -2,9 +2,15 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 const User = require('./models/User');
 
+const dns = require('dns');
+
 async function checkUsers() {
     try {
-        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/crm_sales', {
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/crm_sales';
+        if (mongoUri.startsWith('mongodb+srv://')) {
+            dns.setServers(['8.8.8.8', '1.1.1.1']);
+        }
+        await mongoose.connect(mongoUri, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });

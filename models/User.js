@@ -7,10 +7,10 @@ const UserSchema = new mongoose.Schema({
   fullName: { type: String, trim: true },
   phone: { type: String, trim: true },
   department: { type: String, trim: true },
-  role: { 
-    type: String, 
-    enum: ['superadmin', 'admin', 'manager', 'staff', 'client'], 
-    default: 'staff' 
+  role: {
+    type: String,
+    enum: ['superadmin', 'admin', 'manager', 'staff', 'client'],
+    default: 'staff'
   },
   managerId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -74,12 +74,12 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Set default permissions based on role
-UserSchema.pre('save', function(next) {
+UserSchema.pre('save', function (next) {
   // Normalize role to lowercase
   if (this.role) {
     this.role = this.role.toLowerCase();
   }
-  
+
   // Always set permissions based on role (not just when modified)
   // This ensures old documents with invalid permission structures get corrected
   if (this.role) {

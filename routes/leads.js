@@ -3,6 +3,90 @@ const router = express.Router();
 const Lead = require('../models/Lead');
 const ActivityLog = require('../models/ActivityLog');
 const auth = require('../middleware/auth');
+const { isLeadClient, normalizeLeadClientFields } = require('../utils/leadClient');
+
+function escapeCsv(value) {
+    const text = value == null ? '' : String(value);
+    return `"${text.replace(/"/g, '""')}"`;
+}
+
+function leadToExportRow(lead) {
+    const firstContact = Array.isArray(lead.contacts) && lead.contacts.length > 0 ? lead.contacts[0] : {};
+    return {
+        'Company Name': lead.companyName || '',
+        'Customer Code': lead.customerCode || '',
+        'GST No': lead.gstNo || '',
+        'Category': lead.category || '',
+        'Contact Person': lead.contactPerson || firstContact.name || '',
+        'Designation': lead.designation || firstContact.designation || '',
+        'Email': lead.email || firstContact.email || '',
+        'Mobile': lead.mobile || firstContact.mobile || '',
+        'Address': lead.address || '',
+        'Status': lead.status || '',
+        'Assigned To': lead.assignedTo?.fullName || lead.assignedTo?.email || '',
+        'Remarks': lead.remarks || '',
+        'Created': lead.createdAt ? new Date(lead.createdAt).toISOString().split('T')[0] : '',
+        'Updated': lead.updatedAt ? new Date(lead.updatedAt).toISOString().split('T')[0] : ''
+    };
+}
+
+async function buildLeadAccessQuery(req) {
+    let query = {};
+    const mongoose = require('mongoose');
+    const User = require('../models/User');
+
+    if (req.user.role === 'superadmin') {
+        return {};
+    }
+
+    if (req.user.role === 'admin') {
+        const deptUsers = await User.find({ department: req.user.department }).select('_id');
+        const deptUserIds = deptUsers.map(u => u._id);
+
+        const managersUnderAdmin = await User.find({
+            role: 'manager',
+            createdBy: req.user._id
+        }).select('_id');
+        const managerIds = managersUnderAdmin.map(m => m._id);
+
+        const staffUnderManagers = await User.find({
+            role: 'staff',
+            managerId: { $in: managerIds }
+        }).select('_id');
+        const staffIds = staffUnderManagers.map(s => s._id);
+
+        const allDeptUserIds = [...new Set([...deptUserIds, ...managerIds, ...staffIds])]
+            .map(id => new mongoose.Types.ObjectId(id));
+
+        return {
+            $or: [
+                { user: { $in: allDeptUserIds } },
+                { assignedTo: { $in: allDeptUserIds } }
+            ]
+        };
+    }
+
+    if (req.user.role === 'manager') {
+        const teamMemberIds = await User.find({ managerId: req.user._id }).select('_id');
+        const teamIds = [req.user._id, ...teamMemberIds.map(member => member._id)]
+            .map(id => new mongoose.Types.ObjectId(id));
+
+        return {
+            $or: [
+                { user: { $in: teamIds } },
+                { assignedTo: { $in: teamIds } }
+            ]
+        };
+    }
+
+    const staffId = new mongoose.Types.ObjectId(req.user._id);
+    return {
+        $or: [
+            { assignedTo: staffId },
+            { user: staffId }
+        ]
+    };
+}
 
 // Webhook endpoint to create a lead in Qualification
 router.post('/webhook', async (req, res) => {
@@ -209,7 +293,7 @@ router.get('/export', async (req, res) => {
     try {
         const { status, startDate, endDate } = req.query;
 
-        let query = { user: req.user._id };
+        let query = await buildLeadAccessQuery(req);
 
         if (status) query.status = status;
         if (startDate || endDate) {
@@ -218,7 +302,16 @@ router.get('/export', async (req, res) => {
             if (endDate) query.createdAt.$lte = new Date(endDate);
         }
 
-        const leads = await Lead.find(query).lean();
+        const leads = await Lead.find(query)
+            .populate('assignedTo', 'fullName email')
+            .lean();
+        const exportLeads = leads.filter(lead => !isLeadClient(lead));
+        const rows = exportLeads.map(leadToExportRow);
+        const headers = Object.keys(leadToExportRow({}));
+        const csv = [
+            headers.map(escapeCsv).join(','),
+            ...rows.map(row => headers.map(header => escapeCsv(row[header])).join(','))
+        ].join('\n');
 
         // Log activity
         const ActivityLog = require('../models/ActivityLog');
@@ -226,15 +319,22 @@ router.get('/export', async (req, res) => {
             user: req.user._id,
             action: 'export_data',
             module: 'data',
-            description: `Exported ${leads.length} leads`,
-            metadata: { count: leads.length, filters: { status, startDate, endDate } }
+            description: `Exported ${exportLeads.length} leads`,
+            metadata: { count: exportLeads.length, filters: { status, startDate, endDate } }
         }).save();
 
-        // In production, convert to CSV or Excel
+        if (req.query.format === 'csv') {
+            res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+            res.setHeader('Content-Disposition', `attachment; filename="leads-export-${new Date().toISOString().split('T')[0]}.csv"`);
+            return res.send(csv);
+        }
+
         res.json({
             message: 'Export ready',
-            count: leads.length,
-            data: leads
+            count: exportLeads.length,
+            data: exportLeads,
+            rows,
+            csv
         });
     } catch (error) {
         console.error('Error exporting leads:', error);
@@ -302,8 +402,8 @@ router.post('/', async (req, res) => {
         const { companyName, customerCode, gstNo, category, contactPerson, designation, email, mobile, contacts, address, status, statusDetails, remarks, assignedTo } = req.body;
 
         // Validate required fields
-        if (!companyName || !assignedTo) {
-            return res.status(400).json({ message: 'Company Name and Assigned To are required' });
+        if (!companyName) {
+            return res.status(400).json({ message: 'Company Name is required' });
         }
 
         const user = req.user;
@@ -331,7 +431,7 @@ router.post('/', async (req, res) => {
             status: status || 'new',
             statusUpdates: initialUpdates,
             remarks,
-            assignedTo,
+            assignedTo: (assignedTo && assignedTo !== '') ? assignedTo : null,
             user: user._id
         });
 
@@ -358,7 +458,18 @@ router.post('/', async (req, res) => {
             );
         }
 
-        res.status(201).json(savedLead);
+        // Log activity
+        await new ActivityLog({
+            user: req.user._id,
+            action: 'lead_created',
+            module: 'leads',
+            description: `Created new lead: "${savedLead.companyName}"`,
+            metadata: { leadId: savedLead._id }
+        }).save();
+
+        // Return populated lead for frontend immediate update
+        const populatedLead = await Lead.findById(savedLead._id).populate('assignedTo', 'fullName email');
+        res.status(201).json(populatedLead);
     } catch (error) {
         console.error('Error creating lead:', error);
         res.status(500).json({ message: 'Error creating lead', error: error.message });
@@ -368,6 +479,9 @@ router.post('/', async (req, res) => {
 // Update a lead
 router.put('/:id', async (req, res) => {
     try {
+        console.log(`[UPDATE LEAD] ID: ${req.params.id}, User: ${req.user.email}`);
+        console.log('[UPDATE LEAD] Body:', JSON.stringify(req.body, null, 2));
+        
         const lead = await Lead.findById(req.params.id);
         if (!lead) {
             return res.status(404).json({ message: 'Lead not found' });
@@ -420,8 +534,8 @@ router.put('/:id', async (req, res) => {
 
         // Validate required fields (skip for staff who can only update status/remarks)
         if (req.user.role !== 'staff') {
-            if (!companyName || !resolvedAssignedTo) {
-                return res.status(400).json({ message: 'Company Name and Assigned To are required' });
+            if (companyName !== undefined && !companyName) {
+                return res.status(400).json({ message: 'Company Name is required' });
             }
         }
 
@@ -432,22 +546,39 @@ router.put('/:id', async (req, res) => {
             if (status !== undefined) updateData.status = status;
             if (remarks !== undefined) updateData.remarks = remarks;
         } else {
-            // Other roles can update all fields
-            updateData.companyName = companyName;
+            // Other roles can update all fields. Only change fields that were sent
+            // so quick status actions do not wipe contact/client details.
+            if (companyName !== undefined) updateData.companyName = companyName;
             if (customerCode !== undefined) updateData.customerCode = customerCode;
             if (gstNo !== undefined) updateData.gstNo = gstNo;
             if (category !== undefined) updateData.category = category;
-            updateData.contactPerson = contactPerson;
+            if (contactPerson !== undefined) updateData.contactPerson = contactPerson;
             if (designation !== undefined) updateData.designation = designation;
-            updateData.email = email;
-            updateData.mobile = mobile;
+            if (email !== undefined) updateData.email = email;
+            if (mobile !== undefined) updateData.mobile = mobile;
             if (Array.isArray(contacts)) updateData.contacts = contacts;
-            updateData.address = address;
-            updateData.status = status;
-            updateData.remarks = remarks;
-            updateData.assignedTo = resolvedAssignedTo;
+            if (address !== undefined) updateData.address = address;
+            if (status !== undefined) updateData.status = status;
+            if (remarks !== undefined) updateData.remarks = remarks;
+            
+            // Fix assignedTo logic: if empty string or null, set to null (unassigned)
+            if (assignedTo !== undefined) {
+                updateData.assignedTo = (assignedTo && assignedTo !== '') ? assignedTo : null;
+            } else {
+                updateData.assignedTo = lead.assignedTo;
+            }
         }
         updateData.updatedAt = Date.now();
+
+        const nextStatus = status !== undefined ? status : lead.status;
+        if (isLeadClient({ ...lead.toObject(), ...updateData, status: nextStatus })) {
+            normalizeLeadClientFields(updateData);
+            normalizeLeadClientFields(lead);
+            if (updateData.contactPerson === undefined && lead.contactPerson) updateData.contactPerson = lead.contactPerson;
+            if (updateData.designation === undefined && lead.designation) updateData.designation = lead.designation;
+            if (updateData.email === undefined && lead.email) updateData.email = lead.email;
+            if (updateData.mobile === undefined && lead.mobile) updateData.mobile = lead.mobile;
+        }
 
         let updatedLead = await Lead.findByIdAndUpdate(
             req.params.id,
@@ -474,8 +605,11 @@ router.put('/:id', async (req, res) => {
             // Notify the other party about the comment
             const Notification = require('../models/Notification');
             const updaterId = req.user._id.toString();
-            const creatorId = updatedLead.user ? updatedLead.user.toString() : null;
-            const assigneeId = updatedLead.assignedTo ? updatedLead.assignedTo.toString() : null;
+            // Handle populated user/assignedTo fields
+            const creatorId = updatedLead.user ? (updatedLead.user._id || updatedLead.user).toString() : null;
+            const assigneeId = updatedLead.assignedTo ? (updatedLead.assignedTo._id || updatedLead.assignedTo).toString() : null;
+            
+            console.log(`[DEBUG NOTIFY] updater: ${updaterId}, creator: ${creatorId}, assignee: ${assigneeId}`);
 
             let notifyUserId = null;
             if (updaterId === creatorId && assigneeId && assigneeId !== creatorId) {
@@ -523,9 +657,26 @@ router.put('/:id', async (req, res) => {
             );
         }
 
-        res.json(updatedLead);
+        // Log activity
+        await new ActivityLog({
+            user: req.user._id,
+            action: 'lead_updated',
+            module: 'leads',
+            description: `Updated lead: "${updatedLead.companyName}"`,
+            metadata: { 
+                leadId: updatedLead._id,
+                changes: {
+                    status: status !== oldStatus ? { from: oldStatus, to: status } : undefined,
+                    assignedTo: resolvedAssignedTo !== oldAssignedTo ? { from: oldAssignedTo, to: resolvedAssignedTo } : undefined
+                }
+            }
+        }).save();
+
+        // Return populated lead for frontend immediate update
+        const populatedLead = await Lead.findById(updatedLead._id).populate('assignedTo', 'fullName email');
+        res.json(populatedLead);
     } catch (error) {
-        console.error('Error updating lead:', error);
+        console.error('[UPDATE LEAD ERROR]:', error);
         res.status(500).json({ message: 'Error updating lead', error: error.message });
     }
 });

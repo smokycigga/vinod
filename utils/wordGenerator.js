@@ -183,6 +183,7 @@ async function generateInvoiceWord(invoice, companyInfo) {
                                                                 new Paragraph({ text: `Date: ${fmtDate(invoice.invoiceDate)}`, size: 18, spacing: { after: 60 } }),
                                                                 new Paragraph({ text: `Due Date: ${fmtDate(invoice.dueDate)}`, size: 18, spacing: { after: 60 }, bold: true }),
                                                                 new Paragraph({ text: `Dept Code: ${invoice.deptCode || 'NA'}`, size: 18, spacing: { after: 60 } }),
+                                                                new Paragraph({ text: `Vendor Code: ${(invoice.vendorCode && invoice.vendorCode.trim()) ? invoice.vendorCode.trim() : 'NA'}`, size: 18, spacing: { after: 60 } }),
                                                                 new Paragraph({ text: `PO ID: ${invoice.poId || '—'}`, size: 18 }),
                                                             ],
                                                             margins: { left: 100, right: 100, top: 100, bottom: 100 },

@@ -64,9 +64,8 @@ const leadSchema = new mongoose.Schema({
         trim: true
     },
     assignedTo: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
     },
     notes: [{
         content: String,
@@ -101,6 +100,7 @@ const leadSchema = new mongoose.Schema({
         path: String,
         mimetype: String,
         size: Number,
+        description: String,
         uploadedBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'

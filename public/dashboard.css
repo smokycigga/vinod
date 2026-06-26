@@ -3,7 +3,7 @@
 :root {
   /* ── KMC Brand Palette ─────────────────────────────────── */
   /* Primary: Deep Navy (from KMC logo) */
-  --primary-50:  #eef1f7;
+  --primary-50: #eef1f7;
   --primary-100: #d5ddef;
   --primary-500: #2C4A7C;
   --primary-600: #1B3A6B;
@@ -11,7 +11,7 @@
   --primary-900: #0A1C35;
 
   /* Accent: Warm Gold (from KMC logo) */
-  --accent-50:  #fdf8ee;
+  --accent-50: #fdf8ee;
   --accent-100: #f8edcc;
   --accent-500: #C9963A;
   --accent-600: #B07D28;
@@ -19,25 +19,25 @@
   /* Semantic Colors */
   --success-color: #10b981;
   --success-100: #ecfdf5;
-  --danger-color:  #ef4444;
-  --danger-100:    #fef2f2;
+  --danger-color: #ef4444;
+  --danger-100: #fef2f2;
   --warning-color: #C9963A;
-  --warning-100:   #fdf8ee;
-  --info-color:    #2C4A7C;
-  --info-100:      #eef1f7;
+  --warning-100: #fdf8ee;
+  --info-color: #2C4A7C;
+  --info-100: #eef1f7;
 
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, #2C4A7C 0%, #132D55 100%);
-  --gradient-accent:  linear-gradient(135deg, #C9963A 0%, #B07D28 100%);
-  --gradient-dark:    linear-gradient(135deg, #1B2A4A 0%, #0A1C35 100%);
+  --gradient-accent: linear-gradient(135deg, #C9963A 0%, #B07D28 100%);
+  --gradient-dark: linear-gradient(135deg, #1B2A4A 0%, #0A1C35 100%);
 
   /* Legacy aliases */
-  --primary-color:   #2C4A7C;
-  --primary-hover:   #1B3A6B;
+  --primary-color: #2C4A7C;
+  --primary-hover: #1B3A6B;
   --secondary-color: #C9963A;
 
   /* ── Beige / Warm Neutral Scale ────────────────────────── */
-  --gray-50:  #faf7f2;
+  --gray-50: #faf7f2;
   --gray-100: #f5efe3;
   --gray-200: #e8dcc8;
   --gray-300: #d6c8ae;
@@ -49,17 +49,18 @@
   --gray-900: #130e08;
 
   /* ── Surface Colors ────────────────────────────────────── */
-  --dark-color:   #1B2A4A;
-  --text-color:   #2D2B26;
-  --muted-color:  #726A58;
-  --light-color:  #f5efe3;
-  --bg-color:     #f5f0e8;   /* warm beige page background */
+  --dark-color: #1B2A4A;
+  --text-color: #2D2B26;
+  --muted-color: #726A58;
+  --light-color: #f5efe3;
+  --bg-color: #f5f0e8;
+  /* warm beige page background */
   --border-color: #e0d5c2;
 
   /* ── Layout ────────────────────────────────────────────── */
-  --sidebar-width:      280px;
-  --sidebar-collapsed:  80px;
-  --header-height:      72px;
+  --sidebar-width: 280px;
+  --sidebar-collapsed: 80px;
+  --header-height: 72px;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(43, 35, 20, 0.06);
@@ -73,14 +74,14 @@
   --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Border Radius */
-  --radius-sm:  8px;
-  --radius-md:  12px;
-  --radius-lg:  16px;
-  --radius-xl:  20px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
   --radius-2xl: 24px;
 
   /* Blue palette (kept for any direct references) */
-  --blue-50:  #eef1f7;
+  --blue-50: #eef1f7;
   --blue-100: #d5ddef;
   --blue-200: #b0c0e0;
   --blue-400: #6688bb;
@@ -724,7 +725,7 @@ body {
   align-items: center;
   gap: 20px;
   border: 1px solid var(--blue-200);
-  box-shadow: 0 2px 8px rgba(29,78,216,0.06);
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.06);
   transition: all var(--transition-base);
   position: relative;
   overflow: hidden;
@@ -832,7 +833,7 @@ body {
   border-radius: var(--radius-xl);
   padding: 24px;
   border: 1px solid var(--blue-200);
-  box-shadow: 0 2px 8px rgba(29,78,216,0.06);
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.06);
   min-height: 320px;
 }
 
@@ -875,7 +876,7 @@ body {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgba(255,255,255,0.9);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .data-table td {
@@ -1136,7 +1137,7 @@ body {
   border-color: var(--primary-500);
   color: var(--primary-500);
   background: var(--accent-50);
-  box-shadow: 0 2px 8px rgba(201,150,58,0.15);
+  box-shadow: 0 2px 8px rgba(201, 150, 58, 0.15);
 }
 
 .tab-btn.active {
@@ -2703,11 +2704,14 @@ hr {
 
 /* Status badges for operations */
 .status-badge {
-  padding: 4px 12px;
-  border-radius: 15px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
   display: inline-block;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .status-badge.status-new-request {
@@ -3273,7 +3277,7 @@ hr {
   align-items: center;
   gap: 10px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 2px 8px rgba(43,35,20,0.07);
+  box-shadow: 0 2px 8px rgba(43, 35, 20, 0.07);
   position: relative;
   overflow: hidden;
 }
@@ -3292,7 +3296,7 @@ hr {
 
 .metric-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(43,35,20,0.13);
+  box-shadow: 0 8px 24px rgba(43, 35, 20, 0.13);
 }
 
 .metric-icon {
@@ -3304,7 +3308,7 @@ hr {
   justify-content: center;
   font-size: 22px;
   margin-bottom: 2px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .metric-value {
@@ -3404,7 +3408,7 @@ hr {
   cursor: pointer;
   transition: all 0.18s ease;
   font-family: inherit;
-  box-shadow: 0 1px 4px rgba(43,35,20,0.07);
+  box-shadow: 0 1px 4px rgba(43, 35, 20, 0.07);
   text-align: left;
 }
 
@@ -3412,7 +3416,7 @@ hr {
   background: #fffdf7;
   border-color: #C9963A;
   transform: translateX(5px);
-  box-shadow: 0 4px 14px rgba(201,150,58,0.15);
+  box-shadow: 0 4px 14px rgba(201, 150, 58, 0.15);
 }
 
 .quick-action-btn span {
@@ -3445,7 +3449,7 @@ hr {
   font-size: 18px;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 
 .qa-blue {
@@ -3723,9 +3727,13 @@ hr {
   font-weight: 600;
   color: #6b7280;
   padding: 16px 24px;
-  text-align: left;
+  text-align: center;
   letter-spacing: 0.05em;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.modern-table th:first-child {
+  text-align: left;
 }
 
 .modern-table tbody tr {
@@ -3747,6 +3755,11 @@ hr {
   font-size: 14px;
   color: #111827;
   vertical-align: middle;
+  text-align: center;
+}
+
+.modern-table td:first-child {
+  text-align: left;
 }
 
 .modern-table th:last-child,
@@ -3772,11 +3785,15 @@ hr {
 .status-pill {
   display: inline-flex;
   align-items: center;
-  padding: 4px 12px;
-  border-radius: 16px;
+  justify-content: center;
+  padding: 6px 16px;
+  border-radius: 20px;
   font-size: 12px;
-  font-weight: 500;
-  line-height: 1.5;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  min-width: 100px;
+  text-align: center;
 }
 
 .status-new {
@@ -3789,20 +3806,28 @@ hr {
   color: #92400e;
 }
 
-.status-qualified {
+.status-qualified,
+.status-won,
+.status-agreement {
   background-color: #d1fae5;
   color: #065f46;
 }
 
-.status-lost {
+.status-lost,
+.status-closed {
   background-color: #fee2e2;
   color: #991b1b;
 }
 
 .status-proposal,
 .status-negotiation {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: #e0f2fe;
+  color: #075985;
+}
+
+.status-onboarding {
+  background-color: #f5f3ff;
+  color: #5b21b6;
 }
 
 /* Action Buttons */
@@ -3834,6 +3859,11 @@ hr {
 .btn-icon.delete:hover {
   background: #fee2e2;
   color: #ef4444;
+}
+
+.btn-icon.briefcase:hover {
+  background: #d1fae5;
+  color: #10b981;
 }
 
 /* Empty State */
@@ -4371,7 +4401,8 @@ hr {
 .modern-form-group .input-wrapper input {
   width: 100%;
   padding-left: 40px;
-  padding-right: 40px; /* For the eye icon if present */
+  padding-right: 40px;
+  /* For the eye icon if present */
   background-color: #f9fafb;
   border: 1px solid #d1d5db;
   border-radius: 8px;
@@ -4582,7 +4613,7 @@ hr {
   height: 64px !important;
   background: rgba(244, 237, 224, 0.97) !important;
   border-bottom: 1px solid #DDD0BB !important;
-  box-shadow: 0 2px 6px rgba(43,35,20,0.05) !important;
+  box-shadow: 0 2px 6px rgba(43, 35, 20, 0.05) !important;
 }
 
 /* 2 & 9. Improve Dashboard Cards & Hover Effects */
@@ -4593,9 +4624,9 @@ hr {
   background: #f8e8aa !important;
   border-radius: 16px !important;
   padding: 20px !important;
-  box-shadow: 0 2px 8px rgba(43,35,20,0.07) !important;
+  box-shadow: 0 2px 8px rgba(43, 35, 20, 0.07) !important;
   transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-  border: 1px solid rgba(201,150,58,0.15) !important;
+  border: 1px solid rgba(201, 150, 58, 0.15) !important;
 }
 
 /* 3. Improve Analytics Chart (Pure CSS Bars) */
@@ -5083,13 +5114,13 @@ h2,
   align-items: center;
   justify-content: center;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(43,35,20,0.08);
+  box-shadow: 0 2px 8px rgba(43, 35, 20, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .metric-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(43,35,20,0.13);
+  box-shadow: 0 8px 24px rgba(43, 35, 20, 0.13);
 }
 
 .metric-icon {
@@ -5101,7 +5132,7 @@ h2,
   justify-content: center;
   margin-bottom: 10px;
   font-size: 22px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .metric-value {
@@ -5176,13 +5207,13 @@ h2,
   cursor: pointer;
   transition: all 0.18s ease;
   text-align: left;
-  box-shadow: 0 1px 4px rgba(43,35,20,0.07);
+  box-shadow: 0 1px 4px rgba(43, 35, 20, 0.07);
 }
 
 .quick-action-btn:hover {
   background: #fffdf7;
   border-color: #C9963A;
-  box-shadow: 0 4px 14px rgba(201,150,58,0.15);
+  box-shadow: 0 4px 14px rgba(201, 150, 58, 0.15);
   transform: translateX(5px);
 }
 
@@ -5203,7 +5234,7 @@ h2,
   color: white;
   font-size: 18px;
   flex-shrink: 0;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Solid colored boxes for Quick Actions */
@@ -5394,89 +5425,102 @@ h2,
   font-weight: 600;
   letter-spacing: 0.5px;
 }
+
 /* ================================================================
    NEW LEAD TABULAR MODAL DESIGN
    ================================================================ */
 .new-lead-tabular .tabular-container {
-    overflow-x: auto;
-    width: 100%;
-    margin-bottom: 20px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
+  overflow-x: auto;
+  width: 100%;
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
 }
+
 .new-lead-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: inherit;
-    font-size: 14px;
+  width: 100%;
+  border-collapse: collapse;
+  font-family: inherit;
+  font-size: 14px;
 }
-.new-lead-table td, .new-lead-table th {
-    border: 1px solid #e0e0e0;
-    padding: 10px 12px;
-    vertical-align: middle;
+
+.new-lead-table td,
+.new-lead-table th {
+  border: 1px solid #e0e0e0;
+  padding: 10px 12px;
+  vertical-align: middle;
 }
+
 .new-lead-table .label-col {
-    background-color: #f8f9fa;
-    font-weight: 600;
-    width: 160px;
-    color: #444;
+  background-color: #f8f9fa;
+  font-weight: 600;
+  width: 160px;
+  color: #444;
 }
+
 .new-lead-table .section-title {
-    background-color: #f1f3f5;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #333;
-    padding: 12px;
-    text-align: center;
-    letter-spacing: 0.5px;
+  background-color: #f1f3f5;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #333;
+  padding: 12px;
+  text-align: center;
+  letter-spacing: 0.5px;
 }
+
 .new-lead-table input[type="text"],
 .new-lead-table input[type="email"],
 .new-lead-table input[type="tel"],
 .new-lead-table select,
 .new-lead-table textarea {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 8px 10px;
-    outline: none;
-    transition: border-color 0.2s;
-    font-family: inherit;
-    font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  font-size: 14px;
 }
+
 .new-lead-table input:focus,
 .new-lead-table select:focus,
 .new-lead-table textarea:focus {
-    border-color: var(--primary-color, #2563eb);
+  border-color: var(--primary-color, #2563eb);
 }
+
 .new-lead-table .full-width {
-    width: 100%;
-    box-sizing: border-box;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .contacts-inner-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 0;
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
 }
+
 .contacts-inner-table th {
-    background: #f8f9fa;
-    color: #444;
-    font-weight: 600;
-    border-bottom: 2px solid #ddd;
-    text-align: left;
+  background: #f8f9fa;
+  color: #444;
+  font-weight: 600;
+  border-bottom: 2px solid #ddd;
+  text-align: left;
 }
-.contacts-inner-table td, .contacts-inner-table th {
-    border: 1px solid #e0e0e0;
-    padding: 8px;
+
+.contacts-inner-table td,
+.contacts-inner-table th {
+  border: 1px solid #e0e0e0;
+  padding: 8px;
 }
+
 .contacts-inner-table .contact-input {
-    width: 100%;
-    box-sizing: border-box;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .new-lead-table .required {
-    color: #e74c3c;
-    margin-left: 3px;
+  color: #e74c3c;
+  margin-left: 3px;
 }
 
 /* Compact mode for Add/Edit Lead modal so full form fits on one desktop screen */
@@ -5568,51 +5612,59 @@ h2,
 }
 
 .btn-icon {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.4rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    border-radius: 4px;
-    transition: background 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
 }
+
 .btn-icon:hover {
-    background: #f1f1f1;
+  background: #f1f1f1;
 }
+
 .btn-add-contact {
-    color: #2ecc71;
+  color: #2ecc71;
 }
 
 .restricted-uploads {
-    display: none; /* hidden by default, JS will show it for admin/superadmin */
-    background: #fff5f5;
+  display: none;
+  /* hidden by default, JS will show it for admin/superadmin */
+  background: #fff5f5;
 }
+
 .restricted-uploads.active-row {
-    display: table-row;
+  display: table-row;
 }
+
 /* Chat style Status Updates */
 .status-updates-container {
-    max-height: 200px;
-    overflow-y: auto;
-    background: #fff8dc;
-    border: 1px dotted #ccc;
-    padding: 10px;
-    margin-bottom: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fff8dc;
+  border: 1px dotted #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
 }
+
 .status-update-item {
-    margin-bottom: 8px;
-    font-size: 13px;
-    line-height: 1.4;
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.4;
 }
+
 .status-update-meta {
-    font-weight: bold;
-    color: #e67e22;
+  font-weight: bold;
+  color: #e67e22;
 }
+
 .status-update-text {
-    color: #2980b9;
+  color: #2980b9;
 }
 
 /* Invoice Entry Sheet - PDF-like UI */
@@ -5742,4 +5794,3 @@ h2,
     font-size: 18px;
   }
 }
-

@@ -269,11 +269,23 @@ function capitalizeRole(role) {
 function isLeadClient(lead) {
     if (!lead || !lead.status) return false;
     const status = String(lead.status).toLowerCase();
-    const res = status.includes('won') || status.includes('agreement');
+    const hasAgreement = Array.isArray(lead.attachments) && lead.attachments.length > 0;
+    const res = status === 'client' || status === 'converted client' || (status === 'agreement signed' && hasAgreement);
     if (res) {
         console.warn(`[CLIENT_IDENTIFIED] ${lead.companyName} | Status: ${lead.status}`);
     }
     return res;
+}
+
+function getIdValue(value) {
+    if (!value) return '';
+    return typeof value === 'object' ? (value._id || '') : value;
+}
+
+function canApproveInvoice(inv) {
+    if (currentUser?.role !== 'superadmin' || inv?.approvalStatus !== 'pending') return false;
+    const assignedApproverId = getIdValue(inv.assignedApprover);
+    return !assignedApproverId || assignedApproverId === currentUser._id;
 }
 
 // Apply role-based UI visibility and permissions
@@ -311,6 +323,13 @@ function applyRoleBasedUI() {
         document.querySelectorAll('.invoice-superadmin-section').forEach((item) => {
             item.style.display = 'none';
         });
+    } else {
+        const superadminOnly = document.querySelectorAll('.superadmin-only');
+        superadminOnly.forEach(item => item.style.display = '');
+
+        document.querySelectorAll('.invoice-superadmin-section:not(#invoicePendingTab)').forEach((item) => {
+            item.style.display = '';
+        });
     }
 
     if (!permissions.settings || !permissions.settings.view) {
@@ -342,10 +361,10 @@ function applyRoleBasedUI() {
             const nav = document.querySelector(`[onclick="showSection('${sec}')"]`);
             if (nav) nav.style.display = 'none';
         });
-        
+
         document.querySelectorAll('.exclude-client').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.client-only').forEach(el => el.style.display = '');
-        
+
         setTimeout(() => showSection('agreements'), 100);
     } else {
         document.querySelectorAll('.client-only').forEach(el => el.style.display = 'none');
@@ -520,11 +539,15 @@ async function loadDashboardOverview() {
 
             // Update dashboard stats safely
             const totalLeadsEl = document.getElementById('totalLeads');
+            const totalLeadsMetricEl = document.getElementById('totalLeadsMetric');
             const closedDealsEl = document.getElementById('closedDeals');
+            const closedDealsMetricEl = document.getElementById('closedDealsMetric');
             const pendingTasksEl = document.getElementById('pendingTasks');
 
             if (totalLeadsEl) totalLeadsEl.textContent = data.stats.leads.total;
+            if (totalLeadsMetricEl) totalLeadsMetricEl.textContent = data.stats.leads.total;
             if (closedDealsEl) closedDealsEl.textContent = data.stats.leads.byStatus.won || 0;
+            if (closedDealsMetricEl) closedDealsMetricEl.textContent = data.stats.leads.byStatus.won || 0;
             if (pendingTasksEl) pendingTasksEl.textContent = (data.stats.tasks.pending || 0) + (data.stats.tasks.inProgress || 0);
 
             console.log('Dashboard stats updated:', {
@@ -651,9 +674,17 @@ async function loadDashboardDataFallback() {
                 totalLeadsEl.textContent = totalLeads;
                 console.log('Set totalLeads to:', totalLeads);
             }
+            const totalLeadsMetricEl = document.getElementById('totalLeadsMetric');
+            if (totalLeadsMetricEl) {
+                totalLeadsMetricEl.textContent = totalLeads;
+            }
             if (closedDealsEl) {
                 closedDealsEl.textContent = closedLeads;
                 console.log('Set closedDeals to:', closedLeads);
+            }
+            const closedDealsMetricEl = document.getElementById('closedDealsMetric');
+            if (closedDealsMetricEl) {
+                closedDealsMetricEl.textContent = closedLeads;
             }
             if (pendingTasksEl) {
                 pendingTasksEl.textContent = pendingTasks;
@@ -802,7 +833,7 @@ async function loadLeads() {
 
         const allData = await response.json();
         console.log(`[LOAD_LEADS] Total leads fetched: ${allData.length}`);
-        
+
         // Filter out leads that are actually clients
         allLeadsData = allData.filter(lead => !isLeadClient(lead));
         console.log(`[LOAD_LEADS] Leads after client filtering: ${allLeadsData.length}`);
@@ -885,13 +916,18 @@ async function loadClients() {
                 ? lead.statusUpdates[lead.statusUpdates.length - 1].text
                 : 'No updates yet.';
 
+            const displayContactPerson = lead.contactPerson || 'N/A';
+            const displayDesignation = lead.designation || 'N/A';
+            const displayEmail = lead.email || '';
+            const displayMobile = lead.mobile || 'N/A';
+
             return `
                 <tr>
                     <td>${lead.companyName || 'N/A'}</td>
-                    <td>${lead.contactPerson || 'N/A'}</td>
-                    <td>${lead.designation || 'N/A'}</td>
-                    <td>${lead.email || 'N/A'}</td>
-                    <td>${lead.mobile || 'N/A'}</td>
+                    <td>${displayContactPerson}</td>
+                    <td>${displayDesignation}</td>
+                    <td>${displayEmail ? `<a href="mailto:${displayEmail}" style="color:#3B82F6;text-decoration:none;">${displayEmail}</a>` : '<span style="color:#9CA3AF;">N/A</span>'}</td>
+                    <td>${displayMobile !== 'N/A' ? displayMobile : '<span style="color:#9CA3AF;">N/A</span>'}</td>
                     <td>${assignedUser}</td>
                     <td>${lastUpdate || 'No updates yet.'}</td>
                     <td>
@@ -966,6 +1002,11 @@ function renderLeadsTable() {
         else if (statusLower.includes('lost')) statusClass = 'status-lost';
         else if (statusLower.includes('proposal') || statusLower.includes('negotiation')) statusClass = 'status-proposal';
 
+        const displayContactPerson = lead.contactPerson || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].name : '') || 'N/A';
+        const displayDesignation = lead.designation || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].designation : '') || 'N/A';
+        const displayEmail = lead.email || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].email : '');
+        const displayMobile = lead.mobile || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].mobile : '');
+
         return `
             <tr>
                 <td>
@@ -974,16 +1015,17 @@ function renderLeadsTable() {
                         <span>${companyName}</span>
                     </div>
                 </td>
-                <td>${lead.contactPerson || 'N/A'}</td>
-                <td>${lead.designation || 'N/A'}</td>
-                <td>${lead.email ? `<a href="mailto:${lead.email}" style="color:#3B82F6;text-decoration:none;">${lead.email}</a>` : '<span style="color:#9CA3AF;">N/A</span>'}</td>
-                <td>${lead.mobile || '<span style="color:#9CA3AF;">N/A</span>'}</td>
+                <td>${displayContactPerson}</td>
+                <td>${displayDesignation}</td>
+                <td>${displayEmail ? `<a href="mailto:${displayEmail}" style="color:#3B82F6;text-decoration:none;">${displayEmail}</a>` : '<span style="color:#9CA3AF;">N/A</span>'}</td>
+                <td>${displayMobile || '<span style="color:#9CA3AF;">N/A</span>'}</td>
                 <td>${assignedUser}</td>
                 <td><span class="status-pill ${statusClass}">${lead.status || 'New'}</span></td>
                 <td>
                     <div class="modern-actions">
                         <button class="btn-icon" onclick="viewLead('${lead._id}')" title="View"><ion-icon name="eye-outline" class="icon-sm"></ion-icon></button>
                         ${!isStaff ? `<button class="btn-icon" onclick="editLead('${lead._id}')" title="Edit"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>` : ''}
+                        ${!isLeadClient(lead) ? `<button class="btn-icon briefcase" onclick="convertToClient('${lead._id}', '${lead.companyName}')" title="Send to Client"><ion-icon name="briefcase-outline" class="icon-sm"></ion-icon></button>` : ''}
                         ${['admin', 'superadmin', 'manager'].includes(currentUser?.role) ?
                 `<button class="btn-icon delete" onclick="deleteLead('${lead._id}')" title="Delete"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>` : ''}
                     </div>
@@ -999,7 +1041,7 @@ function filterLeadsByAssignment(filterType) {
     console.log('Filtering leads by assignment:', filterType);
     const filterButtons = document.querySelectorAll('#leadsAssignedFilterBar .filter-btn');
     filterButtons.forEach(btn => btn.classList.remove('active'));
-    
+
     // Find the button that was clicked and set it to active
     event.currentTarget.classList.add('active');
 
@@ -1254,11 +1296,11 @@ async function loadClientAgreements() {
         });
         if (!response.ok) throw new Error('Failed to load agreements');
         const agreements = await response.json();
-        
+
         const tbody = document.getElementById('agreementsTableBody');
         const emptyState = document.getElementById('agreementsEmptyState');
         const table = tbody.closest('table');
-        
+
         if (agreements.length === 0) {
             table.style.display = 'none';
             emptyState.style.display = 'block';
@@ -1637,50 +1679,30 @@ async function updateCompanySettings(e) {
 // Export Functions
 async function exportLeads() {
     try {
-        const response = await fetch(`${API_BASE}/leads/export`, {
+        const response = await fetch(`${API_BASE}/leads/export?format=csv`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
 
         if (response.ok) {
-            const result = await response.json();
-
-            // Convert to CSV format
-            if (result.data && result.data.length > 0) {
-                const headers = ['Name', 'Company', 'Email', 'Phone', 'Status', 'Priority', 'Value', 'Source', 'Created'];
-                const csvRows = [headers.join(',')];
-
-                result.data.forEach(lead => {
-                    const row = [
-                        `"${lead.name || ''}"`,
-                        `"${lead.company || ''}"`,
-                        `"${lead.emails?.[0]?.email || ''}"`,
-                        `"${lead.phones?.[0]?.phone || ''}"`,
-                        lead.status || '',
-                        lead.priority || '',
-                        lead.value || 0,
-                        `"${lead.source || ''}"`,
-                        new Date(lead.createdAt).toLocaleDateString()
-                    ];
-                    csvRows.push(row.join(','));
-                });
-
-                const csvContent = csvRows.join('\n');
-                const blob = new Blob([csvContent], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `leads-export-${new Date().toISOString().split('T')[0]}.csv`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-
-                showNotification(`Exported ${result.count} leads successfully`, 'success');
-            } else {
+            const blob = await response.blob();
+            if (!blob.size) {
                 showNotification('No leads to export', 'info');
+                return;
             }
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `leads-export-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showNotification('Leads exported successfully', 'success');
         } else {
-            throw new Error('Export failed');
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || 'Export failed');
         }
     } catch (error) {
         showNotification('Export error: ' + error.message, 'error');
@@ -1909,7 +1931,7 @@ async function loadPipeline() {
         });
         const pipelineLeads = await leadsResponse.json();
 
-        renderPipeline(pipelineLeads);
+        renderPipeline(pipelineLeads.filter(lead => !isLeadClient(lead)));
     } catch (error) {
         console.error('Pipeline error:', error);
     }
@@ -1933,15 +1955,19 @@ function renderPipeline(leadsToRender) {
                 ? `<button onclick="deleteLead('${lead._id}')" class="btn-icon" style="color: #ef4444;" title="Delete"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>`
                 : '';
 
+            const displayContactPerson = lead.contactPerson || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].name : '') || 'N/A';
+            const displayEmail = lead.email || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].email : '') || '';
+            const displayMobile = lead.mobile || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].mobile : '') || 'N/A';
+
             return `
                 <div class="kanban-card" draggable="true" data-lead-id="${lead._id}">
                     <div class="kanban-card-header">
                         <h4>${lead.companyName || 'N/A'}</h4>
-                        <span class="badge badge-info">${lead.contactPerson || 'N/A'}</span>
+                        <span class="badge badge-info">${displayContactPerson}</span>
                     </div>
                     <div class="kanban-details">
-                        <small><ion-icon name="mail-outline" class="icon-sm"></ion-icon> ${lead.email ? `<a href="mailto:${lead.email}" style="color:inherit;text-decoration:none;">${lead.email}</a>` : 'N/A'}</small>
-                        <small><ion-icon name="call-outline" class="icon-sm"></ion-icon> ${lead.mobile || 'N/A'}</small>
+                        <small><ion-icon name="mail-outline" class="icon-sm"></ion-icon> ${displayEmail ? `<a href="mailto:${displayEmail}" style="color:inherit;text-decoration:none;">${displayEmail}</a>` : 'N/A'}</small>
+                        <small><ion-icon name="call-outline" class="icon-sm"></ion-icon> ${displayMobile}</small>
                         <small><ion-icon name="person-outline" class="icon-sm"></ion-icon> ${assignedUser}</small>
                     </div>
                     <div class="kanban-footer">
@@ -2125,15 +2151,37 @@ function closeAddLeadModal() {
 async function handleAddLead(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
+    // Extract contacts from tabular form
+    const contacts = [];
+    const contactRows = e.target.querySelectorAll('#contactPersonsBody .contact-row');
+
+    contactRows.forEach((row) => {
+        const name = row.querySelector('input[name*="[name]"]')?.value?.trim();
+        const designation = row.querySelector('input[name*="[designation]"]')?.value?.trim();
+        const mobile = row.querySelector('input[name*="[mobile]"]')?.value?.trim();
+        const email = row.querySelector('input[name*="[email]"]')?.value?.trim();
+
+        if (name || mobile || email) {
+            contacts.push({ name, designation, mobile, email });
+        }
+    });
+
     const leadData = {
         companyName: formData.get('companyName'),
-        contactPerson: formData.get('contactPerson'),
-        email: formData.get('email'),
-        mobile: formData.get('mobile'),
+        customerCode: formData.get('customerCode'),
+        gstNo: formData.get('gstNo'),
         address: formData.get('address'),
-        status: formData.get('status') || 'new',
+        category: formData.get('category'),
+        status: formData.get('status') || 'New Lead',
+        statusDetails: formData.get('statusDetails'),
         remarks: formData.get('remarks'),
-        assignedTo: formData.get('assignedTo')
+        assignedTo: formData.get('assignedTo'),
+        contacts: contacts,
+        // Populate top-level fields for backward compatibility and display
+        contactPerson: contacts.length > 0 ? contacts[0].name : '',
+        designation: contacts.length > 0 ? contacts[0].designation : '',
+        email: contacts.length > 0 ? contacts[0].email : '',
+        mobile: contacts.length > 0 ? contacts[0].mobile : ''
     };
 
     try {
@@ -2146,14 +2194,42 @@ async function handleAddLead(e) {
             body: JSON.stringify(leadData)
         });
 
-        if (!response.ok) throw new Error('Failed to create lead');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to create lead');
 
         showNotification('Lead created successfully', 'success');
         closeAddLeadModal();
 
-        if (currentSection === 'pipeline') loadPipeline();
-        else if (currentSection === 'leads') loadLeads();
-        else if (currentSection === 'dashboard') loadDashboardData();
+        // Update global state immediately for responsiveness
+        const newLead = data;
+        if (!isLeadClient(newLead)) {
+            allLeadsData.unshift(newLead); // Add to the beginning of the list
+
+            // Sync filtered data if search is active or just prepend
+            const searchInput = document.getElementById('leadSearchInput');
+            const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+            if (!searchTerm ||
+                (newLead.companyName && newLead.companyName.toLowerCase().includes(searchTerm)) ||
+                (newLead.contactPerson && newLead.contactPerson.toLowerCase().includes(searchTerm)) ||
+                (newLead.email && newLead.email.toLowerCase().includes(searchTerm)) ||
+                (newLead.mobile && newLead.mobile.toLowerCase().includes(searchTerm))) {
+
+                filteredLeadsData.unshift(newLead);
+            }
+        }
+
+        // Always refresh dashboard metrics and activity
+        await loadDashboardData();
+
+        // Refresh specific section views
+        if (currentSection === 'pipeline') {
+            loadPipeline();
+        } else if (currentSection === 'leads') {
+            renderLeadsTable();
+        } else if (currentSection === 'clients' && isLeadClient(newLead)) {
+            loadClients();
+        }
     } catch (error) {
         showNotification('Error creating lead: ' + error.message, 'error');
     }
@@ -2179,6 +2255,7 @@ async function viewLead(id) {
         });
         const communications = commResponse.ok ? await commResponse.json() : [];
 
+        const displayEmail = lead.email || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].email : '');
         const content = document.getElementById('viewLeadContent');
         content.innerHTML = `
             <div class="lead-view-tabs">
@@ -2194,8 +2271,8 @@ async function viewLead(id) {
             </div>
             
             <div class="lead-quick-actions" style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                ${lead.email ? `
-                <a href="mailto:${lead.email}" class="btn btn-sm btn-primary" style="text-decoration: none;">
+                ${displayEmail ? `
+                <a href="mailto:${displayEmail}" class="btn btn-sm btn-primary" style="text-decoration: none;">
                     <ion-icon name="mail-outline" class="icon-sm"></ion-icon> Send Email
                 </a>` : `
                 <button class="btn btn-sm btn-primary" disabled>
@@ -2228,13 +2305,18 @@ async function viewLead(id) {
 
 function renderLeadDetailsTab(lead) {
     const assignedUser = lead.assignedTo?.fullName || lead.assignedTo?.email || 'Unassigned';
+    const displayContactPerson = lead.contactPerson || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].name : '') || 'N/A';
+    const displayDesignation = lead.designation || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].designation : '') || 'N/A';
+    const displayEmail = lead.email || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].email : '') || '';
+    const displayMobile = lead.mobile || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].mobile : '') || 'N/A';
 
     return `
         <div class="detail-grid">
             <div class="detail-item"><strong>Company Name:</strong> ${lead.companyName || 'N/A'}</div>
-            <div class="detail-item"><strong>Contact Person:</strong> ${lead.contactPerson || 'N/A'}</div>
-            <div class="detail-item"><strong>Email:</strong> ${lead.email ? `<a href="mailto:${lead.email}" style="color:var(--primary-color);text-decoration:none;">${lead.email}</a>` : 'N/A'}</div>
-            <div class="detail-item"><strong>Mobile:</strong> ${lead.mobile || 'N/A'}</div>
+            <div class="detail-item"><strong>Contact Person:</strong> ${displayContactPerson}</div>
+            <div class="detail-item"><strong>Designation:</strong> ${displayDesignation}</div>
+            <div class="detail-item"><strong>Email:</strong> ${displayEmail ? `<a href="mailto:${displayEmail}" style="color:var(--primary-color);text-decoration:none;">${displayEmail}</a>` : 'N/A'}</div>
+            <div class="detail-item"><strong>Mobile:</strong> ${displayMobile}</div>
             <div class="detail-item"><strong>Status:</strong> <span class="badge badge-info">${lead.status}</span></div>
             <div class="detail-item"><strong>Assigned To:</strong> ${assignedUser}</div>
             <div class="detail-item full-width"><strong>Address:</strong> ${lead.address || 'N/A'}</div>
@@ -2444,6 +2526,27 @@ function closeViewLeadModal() {
     document.getElementById('viewLeadModal').classList.remove('active');
 }
 
+function addContactRow() {
+    const tbody = document.getElementById('contactPersonsBody');
+    const index = tbody.querySelectorAll('.contact-row').length;
+
+    const row = document.createElement('tr');
+    row.className = 'contact-row';
+    row.innerHTML = `
+        <td><input type="text" name="contacts[${index}][name]" class="contact-input"></td>
+        <td><input type="text" name="contacts[${index}][designation]" class="contact-input" placeholder="e.g. CEO, Manager"></td>
+        <td><input type="tel" name="contacts[${index}][mobile]" class="contact-input"></td>
+        <td><input type="email" name="contacts[${index}][email]" class="contact-input"></td>
+        <td><button type="button" class="btn btn-icon btn-remove-contact" onclick="removeContactRow(this)" title="Remove Contact"><ion-icon name="remove-circle-outline"></ion-icon></button></td>
+    `;
+    tbody.appendChild(row);
+}
+
+function removeContactRow(btn) {
+    const row = btn.closest('.contact-row');
+    if (row) row.remove();
+}
+
 // Modal Functions - Edit Lead
 function addEditContactRow(contact = {}) {
     const tbody = document.getElementById('editContactPersonsBody');
@@ -2607,15 +2710,13 @@ async function handleEditLead(e) {
         leadData.customerCode = formData.get('customerCode');
         leadData.gstNo = formData.get('gstNo');
         leadData.category = formData.get('category');
-        leadData.contactPerson = formData.get('contactPerson');
-        leadData.designation = formData.get('designation');
-        leadData.email = formData.get('email');
-        leadData.mobile = formData.get('mobile');
         leadData.address = formData.get('address');
         leadData.status = formData.get('status');
         leadData.remarks = formData.get('remarks');
         leadData.assignedTo = formData.get('assignedTo');
         leadData.newStatusUpdate = formData.get('newStatusUpdate');
+
+        // Extract contacts from tabular form in edit modal
         leadData.contacts = Array.from(document.querySelectorAll('#editContactPersonsBody .contact-row'))
             .map((row) => ({
                 name: row.querySelector('.edit-contact-name')?.value?.trim() || '',
@@ -2624,6 +2725,12 @@ async function handleEditLead(e) {
                 email: row.querySelector('.edit-contact-email')?.value?.trim() || ''
             }))
             .filter((c) => c.name || c.designation || c.mobile || c.email);
+
+        // Sync top-level fields with first contact if available, otherwise use form values
+        leadData.contactPerson = leadData.contacts.length > 0 ? leadData.contacts[0].name : (formData.get('contactPerson') || '');
+        leadData.designation = leadData.contacts.length > 0 ? leadData.contacts[0].designation : (formData.get('designation') || '');
+        leadData.email = leadData.contacts.length > 0 ? leadData.contacts[0].email : (formData.get('email') || '');
+        leadData.mobile = leadData.contacts.length > 0 ? leadData.contacts[0].mobile : (formData.get('mobile') || '');
     }
 
     try {
@@ -2647,15 +2754,31 @@ async function handleEditLead(e) {
             throw new Error(responseData?.message || 'Failed to update lead');
         }
 
-        if (leadData.status === 'won' || leadData.status === 'qualified') {
+        const normalizedStatus = String(leadData.status || '').toLowerCase();
+        if (normalizedStatus === 'won' || normalizedStatus === 'qualified') {
             showNotification("Deal closed! That's amazing work!", 'celebration');
         } else {
             showNotification('Lead updated successfully', 'success');
         }
         closeEditLeadModal();
 
+        // Always refresh dashboard metrics
+        await loadDashboardData();
+
         if (currentSection === 'pipeline') loadPipeline();
-        else if (currentSection === 'leads') loadLeads();
+        else if (currentSection === 'leads') {
+            if (responseData && isLeadClient(responseData)) {
+                await loadLeads();
+            } else if (responseData) {
+                const idx = allLeadsData.findIndex(l => l._id === leadId);
+                if (idx !== -1) allLeadsData[idx] = responseData;
+                const fIdx = filteredLeadsData.findIndex(l => l._id === leadId);
+                if (fIdx !== -1) filteredLeadsData[fIdx] = responseData;
+                renderLeadsTable();
+            } else {
+                await loadLeads();
+            }
+        }
         else if (currentSection === 'clients') loadClients();
     } catch (error) {
         showNotification('Error updating lead: ' + error.message, 'error');
@@ -3105,6 +3228,11 @@ async function handleUploadFile(e) {
             const result = await response.json();
             showNotification('File uploaded successfully!', 'success');
             closeUploadFileModal();
+            if (currentSection === 'leads') {
+                await loadLeads();
+            } else if (currentSection === 'clients') {
+                await loadClients();
+            }
             // Reload lead details if viewing
             if (document.getElementById('viewLeadModal').classList.contains('active')) {
                 viewLead(leadId);
@@ -3739,8 +3867,40 @@ async function deleteLead(id) {
         if (currentSection === 'pipeline') renderPipeline();
         else if (currentSection === 'leads') loadLeads();
         showNotification('Lead deleted successfully', 'success');
+        loadLeads();
+        loadDashboardData();
     } catch (error) {
         showNotification('Error deleting lead: ' + error.message, 'error');
+    }
+}
+
+async function convertToClient(id, companyName) {
+    if (!confirm(`Are you sure you want to convert "${companyName}" to a Client?`)) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/leads/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                status: 'Client',
+                newStatusUpdate: 'Lead converted to Client via quick action.'
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to convert to client');
+
+        showNotification(`${companyName} is now a Client!`, 'success');
+
+        // Refresh relevant data
+        loadLeads();
+        if (currentSection === 'dashboard') loadDashboardData();
+        if (currentSection === 'clients') loadClients();
+    } catch (error) {
+        showNotification('Error converting to client: ' + error.message, 'error');
     }
 }
 // Task Management Functions
@@ -4379,7 +4539,7 @@ function renderNotifications(notifications) {
     list.innerHTML = notifications.map(notif => {
         const icon = getNotificationIcon(notif.type);
         const timeAgo = formatTimeAgo(new Date(notif.createdAt));
-        
+
         // Find reference ID based on what the notification is for
         let refId = '';
         if (notif.invoice) refId = typeof notif.invoice === 'object' ? notif.invoice._id : notif.invoice;
@@ -4436,7 +4596,7 @@ async function markNotificationRead(notificationId, type, refId) {
         });
 
         loadNotifications();
-        
+
         // Navigation logic based on notification type
         if (type && type.startsWith('invoice_') && refId) {
             showSection('invoices');
@@ -4449,7 +4609,7 @@ async function markNotificationRead(notificationId, type, refId) {
             showSection('leads');
             setTimeout(() => { if (typeof viewLead === 'function') viewLead(refId); }, 300);
         }
-        
+
         // Hide panel when an item is clicked
         const panel = document.getElementById('notificationsPanel');
         if (panel) panel.style.display = 'none';
@@ -5580,6 +5740,7 @@ async function loadInvoiceStats() {
         el('invStatUnpaid', d.unpaid);
         el('invStatOverdue', d.overdue);
         el('invStatValue', fmtINR(d.totalValue));
+        el('invStatOutstanding', fmtINR(d.totalOutstanding));
     } catch (e) { console.error(e); }
 }
 
@@ -5588,6 +5749,8 @@ async function loadInvoices() {
     const tbody = document.getElementById('invoiceTableBody');
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;">Loading...</td></tr>';
+
+    loadInvoiceStats();
 
     try {
         const search = document.getElementById('invSearch')?.value || '';
@@ -5617,8 +5780,10 @@ async function loadInvoices() {
             const candCount = (inv.candidates || []).length;
             const isSuperAdmin = currentUser?.role === 'superadmin';
             const isAdmin = currentUser?.role === 'admin';
+            const canApprove = canApproveInvoice(inv);
             const canEdit = isSuperAdmin || (isAdmin && inv.approvalStatus === 'pending');
             const canDownloadPdf = isSuperAdmin || (isAdmin && (inv.approvalStatus === 'approved' || isDeveloperModeEnabled()));
+            const displayTotal = (inv.receivableAmount === 0 && inv.paymentStatus !== 'paid') ? inv.netPayable : inv.receivableAmount;
             return `
             <tr>
                 <td><strong>${inv.invoiceNumber}</strong></td>
@@ -5626,7 +5791,7 @@ async function loadInvoices() {
                 <td>${custName}</td>
                 <td>${candCount ? candCount + ' candidate' + (candCount > 1 ? 's' : '') : '—'}</td>
                 <td style="text-align:right;">${fmtINR(inv.chargeableAmount)}</td>
-                <td style="text-align:right;font-weight:600;">${fmtINR(inv.netPayable)}</td>
+                <td style="text-align:right;font-weight:600;">${fmtINR(displayTotal)}</td>
                 <td>${fmtD(inv.dueDate)}</td>
                 <td>${statusBadge(inv.paymentStatus)}</td>
                 <td><span style="display:inline-block;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;${inv.approvalStatus === 'approved' ? 'background:#d1fae5;color:#065f46;' : inv.approvalStatus === 'rejected' ? 'background:#fee2e2;color:#991b1b;' : 'background:#fef3c7;color:#92400e;'}">${inv.approvalStatus === 'approved' ? 'Approved' : inv.approvalStatus === 'rejected' ? 'Rejected' : 'Pending'}</span></td>
@@ -5634,8 +5799,9 @@ async function loadInvoices() {
                     <button class="btn btn-sm btn-secondary" onclick="viewInvoice('${inv._id}')" title="View" style="padding:3px 5px;margin:0 1px;"><ion-icon name="eye-outline" style="font-size:14px;"></ion-icon></button>
                     ${canEdit ? `<button class="btn btn-sm btn-primary" onclick="openEditInvoiceModal('${inv._id}')" title="Edit" style="padding:3px 5px;margin:0 1px;"><ion-icon name="create-outline" style="font-size:14px;"></ion-icon></button>` : ''}
                     ${canDownloadPdf ? `<button class="btn btn-sm btn-success" onclick="downloadInvoicePDF('${inv._id}', '${inv.invoiceNumber}')" title="PDF" style="padding:3px 5px;margin:0 1px;"><ion-icon name="download-outline" style="font-size:14px;"></ion-icon></button>` : ''}
-                    <button class="btn btn-sm btn-danger" onclick="deleteInvoice('${inv._id}')" title="Delete" style="padding:3px 5px;margin:0 1px;"><ion-icon name="trash-outline" style="font-size:14px;"></ion-icon></button>
-                    ${(inv.approvalStatus === 'pending' && currentUser?.role === 'superadmin') ? `
+                    ${inv.approvalStatus === 'approved' ? `<button class="btn btn-sm btn-info" onclick="openRecordPaymentModal('${inv._id}', ${displayTotal})" title="Payment Received" style="padding:3px 5px;margin:0 1px;"><ion-icon name="cash-outline" style="font-size:14px;"></ion-icon></button>` : ''}
+                    <button class="btn btn-sm btn-danger" onclick="deleteInvoice('${inv._id}')" title="Delete" style="padding:3px 5px;margin:0 1px;"><ion-icon name="close-outline" style="font-size:14px;"></ion-icon></button>
+                    ${canApprove ? `
                     <button class="btn btn-sm btn-success" onclick="approveInvoice('${inv._id}')" title="Approve" style="padding:3px 5px;margin:0 1px;"><ion-icon name="checkmark-outline" style="font-size:14px;"></ion-icon></button>
                     <button class="btn btn-sm btn-danger" onclick="rejectInvoice('${inv._id}')" title="Reject" style="padding:3px 5px;margin:0 1px;"><ion-icon name="close-outline" style="font-size:14px;"></ion-icon></button>
                     ` : ''}
@@ -5662,14 +5828,65 @@ async function loadPendingApprovalCount() {
         if (!res.ok) throw new Error('Failed to load pending approvals');
         const invoices = await res.json();
         const count = invoices.length;
+        if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (e) { console.error(e); }
+}
 
-        badge.textContent = String(count);
-        badge.style.display = count > 0 ? 'inline-block' : 'none';
-    } catch (error) {
-        console.error('Pending approval count error:', error);
-        badge.style.display = 'none';
+// ── Payment Received ──────────────────────────────────────────
+function openRecordPaymentModal(id, currentBalance) {
+    document.getElementById('paymentInvoiceId').value = id;
+    document.getElementById('paymentAmount').value = currentBalance;
+    document.getElementById('paymentAmount').max = currentBalance;
+    document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('paymentNotes').value = '';
+    document.getElementById('recordPaymentModal').style.display = 'flex';
+}
+
+function closeRecordPaymentModal() {
+    document.getElementById('recordPaymentModal').style.display = 'none';
+}
+
+async function handleRecordPayment(e) {
+    e.preventDefault();
+    const id = document.getElementById('paymentInvoiceId').value;
+    const amount = parseFloat(document.getElementById('paymentAmount').value);
+    const date = document.getElementById('paymentDate').value;
+    const notes = document.getElementById('paymentNotes').value;
+
+    if (!amount || amount <= 0) {
+        showNotification('Please enter a valid amount.', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/invoices/${id}/payment`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ amount, date, notes })
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || 'Failed to record payment');
+        }
+
+        showNotification('Payment recorded successfully.', 'success');
+        closeRecordPaymentModal();
+        loadInvoices();
+        loadInvoiceStats();
+    } catch (e) {
+        showNotification(e.message, 'error');
     }
 }
+
 
 async function loadPendingApprovals() {
     const tbody = document.getElementById('invoicePendingTableBody');
@@ -5700,6 +5917,7 @@ async function loadPendingApprovals() {
         tbody.innerHTML = invoices.map((inv) => {
             const creator = inv.createdBy || {};
             const creatorName = creator.fullName || creator.username || creator.email || 'Unknown';
+            const canApprove = canApproveInvoice(inv);
             return `
             <tr>
                 <td><strong>${inv.invoiceNumber}</strong></td>
@@ -5710,8 +5928,10 @@ async function loadPendingApprovals() {
                 <td>${fmtD(inv.dueDate)}</td>
                 <td style="white-space:nowrap;">
                     <button class="btn btn-sm btn-secondary" onclick="viewInvoice('${inv._id}')" style="margin-right:6px;"><ion-icon name="eye-outline" class="icon-sm"></ion-icon> Preview</button>
+                    ${canApprove ? `
                     <button class="btn btn-sm btn-success" onclick="approveInvoice('${inv._id}')" style="margin-right:6px;"><ion-icon name="checkmark-outline" class="icon-sm"></ion-icon> Approve</button>
                     <button class="btn btn-sm btn-danger" onclick="rejectInvoice('${inv._id}')"><ion-icon name="close-outline" class="icon-sm"></ion-icon> Reject</button>
+                    ` : '<span style="color:#9ca3af;font-size:12px;">Assigned to another approver</span>'}
                 </td>
             </tr>`;
         }).join('');
@@ -5730,6 +5950,43 @@ function clearInvoiceFilters() {
     loadInvoices();
 }
 
+async function exportInvoices(approvalStatus = '') {
+    try {
+        const search = document.getElementById('invSearch')?.value || '';
+        const status = document.getElementById('invFilterStatus')?.value || '';
+        const from = document.getElementById('invFilterFrom')?.value || '';
+        const to = document.getElementById('invFilterTo')?.value || '';
+
+        const params = new URLSearchParams({ format: 'csv' });
+        if (search) params.set('search', search);
+        if (status) params.set('status', status);
+        if (from) params.set('from', from);
+        if (to) params.set('to', to);
+        if (approvalStatus) params.set('approvalStatus', approvalStatus);
+
+        const res = await fetch(`${API_BASE}/invoices?${params.toString()}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Failed to export invoices');
+        }
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${approvalStatus || 'all'}-invoices-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showNotification('Invoices exported successfully', 'success');
+    } catch (error) {
+        showNotification('Invoice export error: ' + error.message, 'error');
+    }
+}
+
 // ── Customer dropdown (for form) ──────────────────────────────
 async function loadInvoiceCustomerDropdown() {
     try {
@@ -5738,6 +5995,7 @@ async function loadInvoiceCustomerDropdown() {
         });
         if (!res.ok) return;
         const customers = await res.json();
+        window._invoiceCustomersCache = customers;
         const sel = document.getElementById('invCustomer');
         if (!sel) return;
         const cur = sel.value;
@@ -5827,6 +6085,7 @@ async function openEditInvoiceModal(id) {
         setVal('invDate', invoiceDateValue);
         setInvoiceDueTermFromDates(invoiceDateValue, dueDateValue);
         setVal('invDeptCode', inv.deptCode || 'NA');
+        setVal('invVendorCode', inv.vendorCode || 'NA');
         setVal('invPoId', inv.poId);
         setVal('invServiceType', inv.serviceType || 'sourcing');
         setVal('invSalary', inv.chargeableSalary);
@@ -5881,6 +6140,7 @@ async function handleSaveInvoice(e) {
         billingCompanyId: document.getElementById('invBillingCompany').value,
         customerId: document.getElementById('invCustomer').value,
         deptCode: document.getElementById('invDeptCode').value,
+        vendorCode: document.getElementById('invVendorCode').value,
         poId: document.getElementById('invPoId').value,
         serviceType: document.getElementById('invServiceType').value,
         chargeableSalary: parseFloat(document.getElementById('invSalary').value),
@@ -5912,6 +6172,7 @@ async function handleSaveInvoice(e) {
         showNotification(id ? 'Invoice updated!' : 'Invoice created!', 'success');
         closeInvoiceModal();
         loadInvoices();
+        loadPendingApprovalCount();
         loadInvoiceStats();
     } catch (e) {
         showNotification('Error: ' + e.message, 'error');
@@ -5929,6 +6190,7 @@ async function deleteInvoice(id) {
         if (!res.ok) throw new Error(data.message);
         showNotification('Invoice deleted.', 'success');
         loadInvoices();
+        loadPendingApprovalCount();
         loadInvoiceStats();
     } catch (e) {
         showNotification('Error: ' + e.message, 'error');
@@ -5994,14 +6256,14 @@ async function viewInvoice(id) {
                     <p><strong>${snap.name || '—'}</strong></p>
                     <p style="color:#666;font-size:13px;">${snap.address || ''}</p>
                     <p>Tel: ${snap.contactNo || '—'} | Email: ${snap.email || '—'}</p>
-                    <p>GSTN: ${snap.gstNo || '—'} | Vendor: ${snap.vendorCode || 'NA'}</p>
+                    <p>GSTN: ${snap.gstNo || '—'} | Vendor: ${(inv.vendorCode !== undefined && inv.vendorCode !== null) ? (inv.vendorCode.trim() || 'NA') : (snap.vendorCode || 'NA')}</p>
                 </div>
                 <div>
                     <h4 style="color:#003087;border-bottom:2px solid #003087;padding-bottom:4px;">Invoice Details</h4>
                     <p><strong>Invoice No:</strong> ${inv.invoiceNumber}</p>
                     <p><strong>Date:</strong> ${fmtD(inv.invoiceDate)}</p>
                     <p><strong>Due Date:</strong> ${fmtD(inv.dueDate)}</p>
-                    <p><strong>Dept Code:</strong> ${inv.deptCode || 'NA'} | <strong>PO ID:</strong> ${inv.poId || '—'}</p>
+                    <p><strong>Dept Code:</strong> ${inv.deptCode || 'NA'} | <strong>Vendor Code:</strong> ${(inv.vendorCode && inv.vendorCode.trim()) ? inv.vendorCode.trim() : 'NA'} | <strong>PO ID:</strong> ${inv.poId || '—'}</p>
                     <p><strong>Status:</strong> ${statusBadge(inv.paymentStatus)}</p>
                 </div>
             </div>
@@ -6172,6 +6434,12 @@ function onInvoiceCustomerChange() {
     if (window._invoiceCustomersCache) {
         const cust = window._invoiceCustomersCache.find(c => c._id === sel.value);
         window._invoiceSelectedCustomerGST = cust ? (cust.gstNo || '') : '';
+        // Only auto-fill vendor code for NEW invoices, not when editing
+        const vendorCodeInput = document.getElementById('invVendorCode');
+        const isEditing = document.getElementById('invoiceEditId')?.value;
+        if (vendorCodeInput && cust && !isEditing) {
+            vendorCodeInput.value = cust.vendorCode || 'NA';
+        }
     }
     recalcInvoice();
 }
@@ -6209,8 +6477,11 @@ async function loadInvoiceCustomers() {
                 <td>${c.email || '—'}</td>
                 <td>${c.vendorCode || 'NA'}</td>
                 <td>
-                    <button class="btn btn-sm btn-primary" onclick="openEditCustomerModal('${c._id}')"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteCustomer('${c._id}')"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>
+                    ${c.isLeadClient ? 
+                      `<span style="font-size:11px;color:#8b5cf6;background:#ede9fe;padding:4px 8px;border-radius:12px;font-weight:600;">CRM Client</span>` : 
+                      `<button class="btn btn-sm btn-primary" onclick="openEditCustomerModal('${c._id}')"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>
+                       <button class="btn btn-sm btn-danger" onclick="deleteCustomer('${c._id}')"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>`
+                    }
                 </td>
             </tr>`).join('');
         tableBodies.forEach((tbody) => {

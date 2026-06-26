@@ -64,7 +64,13 @@ async function notifyLeadHierarchy(lead, type, message, senderId) {
         if (recipients.length > 0) {
             // Filter out duplicates based on recipient ID
             const uniqueRecipients = Array.from(new Map(recipients.map(item => [item.recipient.toString(), item])).values());
-            await Notification.insertMany(uniqueRecipients);
+            console.log(`[NOTIFY HIERARCHY] Creating ${uniqueRecipients.length} notifications for type: ${type}`);
+            try {
+                await Notification.insertMany(uniqueRecipients);
+            } catch (err) {
+                console.error('[NOTIFY HIERARCHY ERROR] validation failed for recipients:', JSON.stringify(uniqueRecipients, null, 2));
+                throw err;
+            }
         }
     } catch (error) {
         console.error('Error creating lead hierarchy notifications:', error);
