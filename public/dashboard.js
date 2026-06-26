@@ -984,7 +984,7 @@ async function loadClients() {
             const displayMobile = lead.mobile || 'N/A';
 
             return `
-                <tr>
+                <tr class="clickable-row" onclick="handleLeadRowClick(event, '${lead._id}')">
                     <td>${lead.companyName || 'N/A'}</td>
                     <td>${displayContactPerson}</td>
                     <td>${displayDesignation}</td>
@@ -994,8 +994,7 @@ async function loadClients() {
                     <td>${lastUpdate || 'No updates yet.'}</td>
                     <td>
                         <div class="modern-actions">
-                            <button class="btn-icon" onclick="viewLead('${lead._id}')" title="View"><ion-icon name="eye-outline" class="icon-sm"></ion-icon></button>
-                            ${!isStaff ? `<button class="btn-icon" onclick="editLead('${lead._id}')" title="Edit"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>` : ''}
+                            ${!isStaff ? `<button class="btn-icon" onclick="event.stopPropagation(); editLead('${lead._id}')" title="Edit"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>` : ''}
                         </div>
                     </td>
                 </tr>
@@ -1070,7 +1069,7 @@ function renderLeadsTable() {
         const displayMobile = lead.mobile || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].mobile : '');
 
         return `
-            <tr>
+            <tr class="clickable-row" onclick="handleLeadRowClick(event, '${lead._id}')">
                 <td>
                     <div class="company-cell">
                         <div class="company-avatar">${companyInitial}</div>
@@ -1085,11 +1084,10 @@ function renderLeadsTable() {
                 <td><span class="status-pill ${statusClass}">${lead.status || 'New'}</span></td>
                 <td>
                     <div class="modern-actions">
-                        <button class="btn-icon" onclick="viewLead('${lead._id}')" title="View"><ion-icon name="eye-outline" class="icon-sm"></ion-icon></button>
-                        ${!isStaff ? `<button class="btn-icon" onclick="editLead('${lead._id}')" title="Edit"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>` : ''}
-                        ${!isLeadClient(lead) ? `<button class="btn-icon briefcase" onclick="convertToClient('${lead._id}', '${lead.companyName}')" title="Send to Client"><ion-icon name="briefcase-outline" class="icon-sm"></ion-icon></button>` : ''}
+                        ${!isStaff ? `<button class="btn-icon" onclick="event.stopPropagation(); editLead('${lead._id}')" title="Edit"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>` : ''}
+                        ${!isLeadClient(lead) ? `<button class="btn-icon briefcase" onclick="event.stopPropagation(); convertToClient('${lead._id}', '${lead.companyName}')" title="Send to Client"><ion-icon name="briefcase-outline" class="icon-sm"></ion-icon></button>` : ''}
                         ${['admin', 'superadmin', 'manager'].includes(currentUser?.role) ?
-                `<button class="btn-icon delete" onclick="deleteLead('${lead._id}')" title="Delete"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>` : ''}
+                `<button class="btn-icon delete" onclick="event.stopPropagation(); deleteLead('${lead._id}')" title="Delete"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>` : ''}
                     </div>
                 </td>
             </tr>
@@ -1174,6 +1172,11 @@ function nextLeadPage() {
 function goToLeadPage(page) {
     currentLeadsPage = page;
     renderLeadsTable();
+}
+
+function handleLeadRowClick(event, leadId) {
+    if (event.target.closest('button, a, input, select, textarea')) return;
+    viewLead(leadId);
 }
 
 

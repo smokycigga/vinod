@@ -1442,6 +1442,18 @@ span.flatpickr-weekday {
   padding: 18px;
 }
 
+.lead-details-modal {
+  width: min(94vw, 980px);
+  max-width: 980px;
+  max-height: 88vh;
+  padding: 32px;
+  font-size: 18px;
+}
+
+.lead-details-modal .modal-header h2 {
+  font-size: 28px;
+}
+
 @keyframes modalSlideUp {
   from {
     opacity: 0;
@@ -2325,21 +2337,23 @@ hr {
 .detail-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 18px;
 }
 
 .detail-item {
-  padding: 8px 10px;
+  padding: 18px 20px;
   background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid var(--primary-color);
+  border-radius: 10px;
+  border-left: 6px solid var(--primary-color);
+  font-size: 20px;
+  line-height: 1.35;
 }
 
 .detail-item strong {
   display: block;
-  margin-bottom: 2px;
+  margin-bottom: 8px;
   color: #666;
-  font-size: 11px;
+  font-size: 15px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -2480,6 +2494,26 @@ hr {
 .lead-quick-actions {
   padding-top: 20px;
   border-top: 1px solid #e5e7eb;
+}
+
+.lead-details-modal .lead-view-tabs {
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.lead-details-modal .lead-view-tabs .tab-btn {
+  padding: 16px 26px;
+  font-size: 18px;
+  border-radius: 8px 8px 0 0;
+}
+
+.lead-details-modal .lead-tab-content {
+  min-height: 420px;
+}
+
+.lead-details-modal .lead-quick-actions .btn {
+  font-size: 17px;
+  padding: 12px 18px;
 }
 
 /* File Items */
@@ -3835,6 +3869,14 @@ hr {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: #fff7df;
 }
 
 .btn-icon {
