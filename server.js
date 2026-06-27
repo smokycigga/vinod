@@ -89,15 +89,28 @@ if (!mongoUri) {
     console.warn('No MONGODB_URI/MONGO_URI found. Falling back to local MongoDB at mongodb://localhost:27017/crm_sales');
 }
 
-if (mongoUri) {
-    mongoose.connect(mongoUri, {
+let mongoConnectPromise = null;
+function connectDatabase() {
+    if (!mongoUri) return Promise.resolve(null);
+    if (mongoose.connection.readyState === 1) return Promise.resolve(mongoose.connection);
+    if (mongoConnectPromise) return mongoConnectPromise;
+
+    mongoConnectPromise = mongoose.connect(mongoUri, {
         useNewUrlParser: true,
-        useUnifiedTopology: true
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 8000
     }).catch((error) => {
         console.error('Initial MongoDB connection failed:', error.message);
         if (!process.env.VERCEL) process.exit(1);
+        return null;
+    }).finally(() => {
+        mongoConnectPromise = null;
     });
+
+    return mongoConnectPromise;
 }
+
+connectDatabase();
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
@@ -127,6 +140,22 @@ db.once('open', async () => {
     }
 });
 
+async function requireDatabase(req, res, next) {
+    if (!mongoUri) {
+        return res.status(503).json({ message: 'Database unavailable. Set MONGODB_URI in Vercel.' });
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+        await connectDatabase();
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({ message: 'Database unavailable. Please try again shortly.' });
+    }
+
+    next();
+}
+
 // Import routes
 const leadRoutes = require('./routes/leads');
 const pipelineRoutes = require('./routes/pipeline');
@@ -142,6 +171,7 @@ const notificationRoutes = require('./routes/notifications');
 const invoiceRoutes = require('./routes/invoices');
 
 // Use routes
+app.use('/api', requireDatabase);
 app.use('/api/leads', leadRoutes);
 app.use('/api/pipeline', pipelineRoutes);
 app.use('/api', authRoutes);
