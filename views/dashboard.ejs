@@ -934,7 +934,23 @@
                             style="color:#0369a1"></ion-icon></div>
                     <div class="stat-info">
                         <div class="stat-number" id="invStatOutstanding">—</div>
-                        <div class="stat-label">Outstanding Amount</div>
+                        <div class="stat-label">Outstanding = Chargeable Salary + GST</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#eef2ff"><ion-icon name="card-outline" class="icon-sm"
+                            style="color:#1d4ed8"></ion-icon></div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="invStatReceivableClient">—</div>
+                        <div class="stat-label">Receivable from client (After TDS deduction)</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#ecfdf5"><ion-icon name="calculator-outline"
+                            class="icon-sm" style="color:#047857"></ion-icon></div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="invStatChargeableAmount">—</div>
+                        <div class="stat-label">Total Chargeable Amount</div>
                     </div>
                 </div>
             </div>
@@ -992,7 +1008,6 @@
                                 <th>Customer</th>
                                 <th>Candidates</th>
                                 <th>Chargeable Amt (₹)</th>
-                                <th>Total Chargeable Salary (₹)</th>
                                 <th>Net Payable (₹)</th>
                                 <th>Due Date</th>
                                 <th>Pay Status</th>
@@ -1002,7 +1017,7 @@
                         </thead>
                         <tbody id="invoiceTableBody">
                             <tr>
-                                <td colspan="11" style="text-align:center;padding:20px;">Loading...</td>
+                                <td colspan="10" style="text-align:center;padding:20px;">Loading...</td>
                             </tr>
                         </tbody>
                     </table>

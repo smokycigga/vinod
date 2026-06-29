@@ -387,28 +387,44 @@ router.get('/stats', async (req, res) => {
             { paymentStatus: 'overdue' }
         );
 
-        const [total, paid, unpaid, overdue, totalValueRes, totalOutstandingRes] = await Promise.all([
+        const [total, paid, unpaid, overdue, totalsRes] = await Promise.all([
             Invoice.countDocuments(filter),
             Invoice.countDocuments({ ...filter, paymentStatus: 'paid' }),
             Invoice.countDocuments({ ...filter, paymentStatus: { $in: ['unpaid', 'partial'] } }),
             Invoice.countDocuments({ ...filter, paymentStatus: 'overdue' }),
             Invoice.aggregate([
                 { $match: filter },
-                { $group: { _id: null, sum: { $sum: '$netPayable' } } }
-            ]),
-            Invoice.aggregate([
-                { $match: filter },
-                { $group: { _id: null, sum: { $sum: { $cond: [{ $and: [{ $eq: ['$receivableAmount', 0] }, { $ne: ['$paymentStatus', 'paid'] }] }, '$netPayable', '$receivableAmount'] } } } }
+                {
+                    $group: {
+                        _id: null,
+                        totalValue: { $sum: '$netPayable' },
+                        totalOutstanding: {
+                            $sum: { $cond: [{ $ne: ['$paymentStatus', 'paid'] }, '$netPayable', 0] }
+                        },
+                        totalChargeableAmount: { $sum: { $ifNull: ['$chargeableAmount', 0] } },
+                        receivableFromClient: {
+                            $sum: {
+                                $add: [
+                                    { $multiply: [{ $ifNull: ['$chargeableAmount', 0] }, 0.9] },
+                                    { $ifNull: ['$totalGst', 0] }
+                                ]
+                            }
+                        }
+                    }
+                }
             ])
         ]);
+        const totals = totalsRes[0] || {};
 
         res.json({
             total,
             paid,
             unpaid,
             overdue,
-            totalValue: totalValueRes[0]?.sum || 0,
-            totalOutstanding: totalOutstandingRes[0]?.sum || 0
+            totalValue: totals.totalValue || 0,
+            totalOutstanding: totals.totalOutstanding || 0,
+            totalChargeableAmount: totals.totalChargeableAmount || 0,
+            receivableFromClient: totals.receivableFromClient || 0
         });
     } catch (err) {
         res.status(500).json({ message: err.message });

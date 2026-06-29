@@ -5811,6 +5811,8 @@ async function loadInvoiceStats() {
         el('invStatOverdue', d.overdue);
         el('invStatValue', fmtINR(d.totalValue));
         el('invStatOutstanding', fmtINR(d.totalOutstanding));
+        el('invStatReceivableClient', fmtINR(d.receivableFromClient));
+        el('invStatChargeableAmount', fmtINR(d.totalChargeableAmount));
     } catch (e) { console.error(e); }
 }
 
@@ -5818,7 +5820,7 @@ async function loadInvoiceStats() {
 async function loadInvoices() {
     const tbody = document.getElementById('invoiceTableBody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:20px;">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;">Loading...</td></tr>';
 
     loadInvoiceStats();
 
@@ -5841,7 +5843,7 @@ async function loadInvoices() {
         const invoices = await res.json();
 
         if (invoices.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#999;">No invoices found. Click <strong>New Invoice</strong> to create one.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#999;">No invoices found. Click <strong>New Invoice</strong> to create one.</td></tr>';
             return;
         }
 
@@ -5854,7 +5856,6 @@ async function loadInvoices() {
             const canEdit = isSuperAdmin || (isAdmin && inv.approvalStatus === 'pending');
             const canDownloadPdf = isSuperAdmin || (isAdmin && (inv.approvalStatus === 'approved' || isDeveloperModeEnabled()));
             const displayTotal = (inv.receivableAmount === 0 && inv.paymentStatus !== 'paid') ? inv.netPayable : inv.receivableAmount;
-            const totalChargeableSalary = (Number(inv.chargeableAmount) || 0) - ((Number(inv.chargeableAmount) || 0) * 0.10) + (Number(inv.totalGst) || 0);
             return `
             <tr class="clickable-row" onclick="handleInvoiceRowClick(event, '${inv._id}')">
                 <td><strong>${inv.invoiceNumber}</strong></td>
@@ -5862,7 +5863,6 @@ async function loadInvoices() {
                 <td>${custName}</td>
                 <td>${candCount ? candCount + ' candidate' + (candCount > 1 ? 's' : '') : '—'}</td>
                 <td style="text-align:right;">${fmtINR(inv.chargeableAmount)}</td>
-                <td style="text-align:right;font-weight:600;">${fmtINR(totalChargeableSalary)}</td>
                 <td style="text-align:right;font-weight:600;">${fmtINR(displayTotal)}</td>
                 <td>${fmtD(inv.dueDate)}</td>
                 <td>${statusBadge(inv.paymentStatus)}</td>
@@ -5880,7 +5880,7 @@ async function loadInvoices() {
             </tr>`;
         }).join('');
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:red;">${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:red;">${e.message}</td></tr>`;
     }
 }
 
