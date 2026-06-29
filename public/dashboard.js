@@ -6549,8 +6549,7 @@ async function loadInvoiceCustomers() {
                 <td>
                     ${c.archivedAt
                         ? `<button class="btn btn-sm btn-success" onclick="restoreCustomer('${c._id}')"><ion-icon name="refresh-outline" class="icon-sm"></ion-icon> Restore</button>`
-                        : `${c.isLeadClient ? `<span style="font-size:11px;color:#8b5cf6;background:#ede9fe;padding:4px 8px;border-radius:12px;font-weight:600;">CRM Client</span>` : ''}
-                           <button class="btn btn-sm btn-primary" onclick="openEditCustomerModal('${c._id}')"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>
+                        : `<button class="btn btn-sm btn-primary" onclick="openEditCustomerModal('${c._id}')"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>
                            ${!c.isLeadClient ? `<button class="btn btn-sm btn-danger" onclick="deleteCustomer('${c._id}')"><ion-icon name="archive-outline" class="icon-sm"></ion-icon></button>` : ''}`
                     }
                 </td>
