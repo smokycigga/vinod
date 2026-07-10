@@ -341,7 +341,7 @@ router.get('/', async (req, res) => {
             .populate('createdBy', 'fullName username email')
             .populate('assignedApprover', 'fullName username email')
             .populate('approvedBy', 'fullName username email')
-            .sort({ invoiceDate: -1 });
+            .sort({ invoiceDate: -1, invoiceNumber: -1 });
 
         // Auto-mark overdue invoices
         const today = new Date();

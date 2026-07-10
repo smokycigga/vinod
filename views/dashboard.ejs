@@ -47,7 +47,92 @@
             align-items: center;
             justify-content: center;
         }
+
+        /* ── Compact, eye-catching invoice summary cards ── */
+        #invoiceStatsGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 14px;
+        }
+
+        #invoiceStatsGrid .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: #ffffff;
+            border: 1px solid #eef0f4;
+            border-radius: 14px;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        #invoiceStatsGrid .stat-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--accent, #ff8c00);
+        }
+
+        #invoiceStatsGrid .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(16, 24, 40, 0.10);
+        }
+
+        #invoiceStatsGrid .stat-icon {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+
+        #invoiceStatsGrid .stat-info {
+            min-width: 0;
+        }
+
+        #invoiceStatsGrid .stat-number {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.1;
+            color: #101828;
+            letter-spacing: -0.4px;
+            white-space: nowrap;
+        }
+
+        #invoiceStatsGrid .stat-label {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #667085;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-top: 3px;
+            line-height: 1.25;
+        }
+
+        #invoiceStatsGrid .stat-sublabel {
+            font-size: 10.5px;
+            color: #98a2b3;
+            margin-top: 2px;
+        }
+
+        /* Accent colours per card (order matches the grid) */
+        #invoiceStatsGrid .stat-card:nth-child(1) { --accent: #ff8c00; }
+        #invoiceStatsGrid .stat-card:nth-child(2) { --accent: #12b76a; }
+        #invoiceStatsGrid .stat-card:nth-child(3) { --accent: #f79009; }
+        #invoiceStatsGrid .stat-card:nth-child(4) { --accent: #f04438; }
+        #invoiceStatsGrid .stat-card:nth-child(5) { --accent: #ff8c00; }
+        #invoiceStatsGrid .stat-card:nth-child(6) { --accent: #1570ef; }
+        #invoiceStatsGrid .stat-card:nth-child(7) { --accent: #12b76a; }
     </style>
+
 </head>
 
 <body>
