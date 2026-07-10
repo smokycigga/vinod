@@ -136,6 +136,11 @@
             margin-top: 1px;
         }
 
+        /* Keep the first four count cards compact (numbers are short) */
+        #invoiceStatsGrid .stat-card:nth-child(-n+4) {
+            max-width: 200px;
+        }
+
         /* Accent colours per card (order matches the grid) */
         #invoiceStatsGrid .stat-card:nth-child(1) { --accent: #ff8c00; }
         #invoiceStatsGrid .stat-card:nth-child(2) { --accent: #12b76a; }
