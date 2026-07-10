@@ -401,7 +401,10 @@ router.get('/stats', async (req, res) => {
                         totalOutstanding: {
                             $sum: { $cond: [{ $ne: ['$paymentStatus', 'paid'] }, '$netPayable', 0] }
                         },
-                        totalChargeableAmount: { $sum: { $ifNull: ['$chargeableAmount', 0] } },
+                        // Outstanding Chargeable Salary = sum of chargeable amount for UNPAID invoices only
+                        totalChargeableAmount: {
+                            $sum: { $cond: [{ $ne: ['$paymentStatus', 'paid'] }, { $ifNull: ['$chargeableAmount', 0] }, 0] }
+                        },
                         // Receivable = for UNPAID invoices only: (chargeable amount − 10% TDS) + GST
                         receivableFromClient: {
                             $sum: {

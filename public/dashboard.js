@@ -5810,7 +5810,6 @@ async function loadInvoiceStats() {
         el('invStatUnpaid', d.unpaid);
         el('invStatOverdue', d.overdue);
         el('invStatValue', fmtINR(d.totalValue));
-        el('invStatOutstanding', fmtINR(d.totalOutstanding));
         el('invStatReceivableClient', fmtINR(d.receivableFromClient));
         el('invStatChargeableAmount', fmtINR(d.totalChargeableAmount));
     } catch (e) { console.error(e); }
