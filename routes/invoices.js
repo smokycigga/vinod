@@ -832,6 +832,46 @@ router.put('/:id', async (req, res) => {
             }
         }
 
+        // Allow changing the customer on an invoice. Resolve from InvoiceCustomer
+        // first, then fall back to a CRM lead-client (auto-creating a customer).
+        if (customerId && (!invoice.customer || invoice.customer.toString() !== customerId.toString())) {
+            let newCustomer = await InvoiceCustomer.findById(customerId);
+            if (!newCustomer) {
+                const lead = await Lead.findById(customerId);
+                if (lead && isLeadClient(lead)) {
+                    normalizeLeadClientFields(lead);
+                    newCustomer = await InvoiceCustomer.findOne({ name: lead.companyName || lead.contactPerson });
+                    if (!newCustomer) {
+                        const uniqueCode = lead.customerCode || ('LD-' + lead._id.toString().substring(18).toUpperCase());
+                        const existingByCode = await InvoiceCustomer.findOne({ customerId: uniqueCode });
+                        newCustomer = new InvoiceCustomer({
+                            customerId: existingByCode ? uniqueCode + '-' + Math.floor(Math.random() * 1000) : uniqueCode,
+                            name: lead.companyName || lead.contactPerson || 'Unknown Client',
+                            address: lead.address || '',
+                            contactNo: lead.mobile || '',
+                            email: lead.email || '',
+                            gstNo: lead.gstNo || '',
+                            vendorCode: 'NA'
+                        });
+                        await newCustomer.save();
+                    }
+                }
+            }
+            if (newCustomer) {
+                invoice.customer = newCustomer._id;
+                invoice.customerSnapshot = {
+                    customerId: newCustomer.customerId,
+                    name: newCustomer.name,
+                    address: newCustomer.address,
+                    contactNo: newCustomer.contactNo,
+                    email: newCustomer.email,
+                    gstNo: newCustomer.gstNo,
+                    vendorCode: newCustomer.vendorCode
+                };
+                changedFields.push('customer');
+            }
+        }
+
         // Track edit history if changes were made
         if (changedFields.length > 0) {
             invoice.lastEditedBy = req.user._id;
