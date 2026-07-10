@@ -402,11 +402,18 @@ router.get('/stats', async (req, res) => {
                             $sum: { $cond: [{ $ne: ['$paymentStatus', 'paid'] }, '$netPayable', 0] }
                         },
                         totalChargeableAmount: { $sum: { $ifNull: ['$chargeableAmount', 0] } },
+                        // Receivable = for UNPAID invoices only: (chargeable amount − 10% TDS) + GST
                         receivableFromClient: {
                             $sum: {
-                                $add: [
-                                    { $multiply: [{ $ifNull: ['$chargeableAmount', 0] }, 0.9] },
-                                    { $ifNull: ['$totalGst', 0] }
+                                $cond: [
+                                    { $ne: ['$paymentStatus', 'paid'] },
+                                    {
+                                        $add: [
+                                            { $multiply: [{ $ifNull: ['$chargeableAmount', 0] }, 0.9] },
+                                            { $ifNull: ['$totalGst', 0] }
+                                        ]
+                                    },
+                                    0
                                 ]
                             }
                         }
