@@ -48,16 +48,49 @@
             justify-content: center;
         }
 
-        /* ── Compact, eye-catching invoice summary cards ── */
+        /* ── Compact, eye-catching invoice summary cards (bento) ── */
         #invoiceStatsGrid {
             display: grid !important;
-            grid-template-columns: repeat(4, 1fr) !important;
+            grid-template-columns: repeat(3, 1fr) !important;
             gap: 10px !important;
+        }
+
+        /* Top strip: 4 count cards merged into one bento row */
+        #invoiceStatsGrid .stat-bento {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            background: #ffffff;
+            border: 1px solid #eef0f4;
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+            overflow: hidden;
+        }
+
+        #invoiceStatsGrid .stat-bento .stat-card {
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            border-right: 1px solid #eef0f4 !important;
+        }
+
+        #invoiceStatsGrid .stat-bento .stat-card:last-child {
+            border-right: none !important;
+        }
+
+        #invoiceStatsGrid .stat-bento .stat-card:hover {
+            transform: none;
+            box-shadow: none !important;
+            background: #fafbfc !important;
         }
 
         @media (max-width: 720px) {
             #invoiceStatsGrid {
-                grid-template-columns: repeat(2, 1fr) !important;
+                grid-template-columns: 1fr !important;
+            }
+            #invoiceStatsGrid .stat-bento {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
@@ -136,19 +169,15 @@
             margin-top: 1px;
         }
 
-        /* Keep the first four count cards compact (numbers are short) */
-        #invoiceStatsGrid .stat-card:nth-child(-n+4) {
-            max-width: 200px;
-        }
-
-        /* Accent colours per card (order matches the grid) */
-        #invoiceStatsGrid .stat-card:nth-child(1) { --accent: #ff8c00; }
-        #invoiceStatsGrid .stat-card:nth-child(2) { --accent: #12b76a; }
-        #invoiceStatsGrid .stat-card:nth-child(3) { --accent: #f79009; }
-        #invoiceStatsGrid .stat-card:nth-child(4) { --accent: #f04438; }
-        #invoiceStatsGrid .stat-card:nth-child(5) { --accent: #ff8c00; }
-        #invoiceStatsGrid .stat-card:nth-child(6) { --accent: #1570ef; }
-        #invoiceStatsGrid .stat-card:nth-child(7) { --accent: #12b76a; }
+        /* Accent colours: 4 bento count cards */
+        #invoiceStatsGrid .stat-bento .stat-card:nth-child(1) { --accent: #ff8c00; }
+        #invoiceStatsGrid .stat-bento .stat-card:nth-child(2) { --accent: #12b76a; }
+        #invoiceStatsGrid .stat-bento .stat-card:nth-child(3) { --accent: #f79009; }
+        #invoiceStatsGrid .stat-bento .stat-card:nth-child(4) { --accent: #f04438; }
+        /* Accent colours: 3 amount cards (direct grid children after bento) */
+        #invoiceStatsGrid > .stat-card:nth-of-type(1) { --accent: #ff8c00; }
+        #invoiceStatsGrid > .stat-card:nth-of-type(2) { --accent: #1570ef; }
+        #invoiceStatsGrid > .stat-card:nth-of-type(3) { --accent: #12b76a; }
     </style>
 
 </head>
@@ -992,36 +1021,38 @@
 
             <!-- Summary Cards -->
             <div class="stats-grid invoice-admin-section" id="invoiceStatsGrid" style="margin-bottom:18px;">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#fff7ed"><ion-icon name="document-text-outline"
-                            class="icon-sm" style="color:#ff8c00"></ion-icon></div>
-                    <div class="stat-info">
-                        <div class="stat-number" id="invStatTotal">—</div>
-                        <div class="stat-label">Total Invoices</div>
+                <div class="stat-bento">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#fff7ed"><ion-icon name="document-text-outline"
+                                class="icon-sm" style="color:#ff8c00"></ion-icon></div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="invStatTotal">—</div>
+                            <div class="stat-label">Total Invoices</div>
+                        </div>
                     </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#e6f4ea"><ion-icon name="checkmark-circle-outline"
-                            class="icon-sm" style="color:#2e7d32"></ion-icon></div>
-                    <div class="stat-info">
-                        <div class="stat-number" id="invStatPaid">—</div>
-                        <div class="stat-label">Paid</div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#e6f4ea"><ion-icon name="checkmark-circle-outline"
+                                class="icon-sm" style="color:#2e7d32"></ion-icon></div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="invStatPaid">—</div>
+                            <div class="stat-label">Paid</div>
+                        </div>
                     </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#fff3e0"><ion-icon name="time-outline" class="icon-sm"
-                            style="color:#ef6c00"></ion-icon></div>
-                    <div class="stat-info">
-                        <div class="stat-number" id="invStatUnpaid">—</div>
-                        <div class="stat-label">Unpaid</div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#fff3e0"><ion-icon name="time-outline" class="icon-sm"
+                                style="color:#ef6c00"></ion-icon></div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="invStatUnpaid">—</div>
+                            <div class="stat-label">Unpaid</div>
+                        </div>
                     </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:#fce8e8"><ion-icon name="warning-outline" class="icon-sm"
-                            style="color:#c62828"></ion-icon></div>
-                    <div class="stat-info">
-                        <div class="stat-number" id="invStatOverdue">—</div>
-                        <div class="stat-label">Overdue</div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#fce8e8"><ion-icon name="warning-outline"
+                                class="icon-sm" style="color:#c62828"></ion-icon></div>
+                        <div class="stat-info">
+                            <div class="stat-number" id="invStatOverdue">—</div>
+                            <div class="stat-label">Overdue</div>
+                        </div>
                     </div>
                 </div>
                 <div class="stat-card">
