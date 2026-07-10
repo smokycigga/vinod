@@ -51,22 +51,22 @@
         /* ── Compact, eye-catching invoice summary cards ── */
         #invoiceStatsGrid {
             display: grid !important;
-            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) !important;
-            gap: 14px !important;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+            gap: 10px !important;
         }
 
         #invoiceStatsGrid .stat-card {
             display: flex !important;
             align-items: center;
-            gap: 12px;
-            padding: 14px 16px !important;
+            gap: 10px;
+            padding: 9px 12px !important;
             background: #ffffff !important;
             border: 1px solid #eef0f4 !important;
-            border-radius: 14px !important;
+            border-radius: 10px !important;
             box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04) !important;
             position: relative;
-            overflow: visible;
-            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            overflow: hidden;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
 
         #invoiceStatsGrid .stat-card::before {
@@ -75,24 +75,27 @@
             left: 0;
             top: 0;
             bottom: 0;
-            width: 4px;
-            border-radius: 14px 0 0 14px;
+            width: 3px;
             background: var(--accent, #ff8c00);
         }
 
         #invoiceStatsGrid .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 24px rgba(16, 24, 40, 0.10) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 24, 40, 0.09) !important;
         }
 
         #invoiceStatsGrid .stat-icon {
             flex: 0 0 auto;
-            width: 38px;
-            height: 38px;
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 10px;
+            border-radius: 8px;
+        }
+
+        #invoiceStatsGrid .stat-icon ion-icon {
+            font-size: 15px;
         }
 
         #invoiceStatsGrid .stat-info {
@@ -101,29 +104,30 @@
         }
 
         #invoiceStatsGrid .stat-number {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 800;
-            line-height: 1.15;
+            line-height: 1.1;
             color: #101828;
             letter-spacing: -0.3px;
             white-space: nowrap;
-            overflow: visible;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         #invoiceStatsGrid .stat-label {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             color: #667085;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
-            margin-top: 3px;
-            line-height: 1.25;
+            letter-spacing: 0.2px;
+            margin-top: 2px;
+            line-height: 1.2;
         }
 
         #invoiceStatsGrid .stat-sublabel {
-            font-size: 10.5px !important;
+            font-size: 9.5px !important;
             color: #98a2b3 !important;
-            margin-top: 2px;
+            margin-top: 1px;
         }
 
         /* Accent colours per card (order matches the grid) */
