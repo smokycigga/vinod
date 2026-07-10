@@ -51,8 +51,14 @@
         /* ── Compact, eye-catching invoice summary cards ── */
         #invoiceStatsGrid {
             display: grid !important;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+            grid-template-columns: repeat(4, 1fr) !important;
             gap: 10px !important;
+        }
+
+        @media (max-width: 720px) {
+            #invoiceStatsGrid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
         }
 
         #invoiceStatsGrid .stat-card {
