@@ -403,10 +403,13 @@ router.get('/:id', async (req, res) => {
 // Create a new lead (SuperAdmin, Admin, Manager can create)
 router.post('/', async (req, res) => {
     try {
-        // Staff cannot create leads
-        if (req.user.role === 'staff') {
+        // Staff cannot create leads by default. A per-user permission override
+        // (permissions.leads.create === true) can grant an individual staff
+        // member this right without changing their role.
+        if (req.user.role === 'staff' && req.user.permissions?.leads?.create !== true) {
             return res.status(403).json({ message: 'Staff cannot create leads. Leads must be assigned by your Manager or Admin.' });
         }
+
 
         const { companyName, customerCode, gstNo, category, contactPerson, designation, email, mobile, contacts, address, status, statusDetails, remarks, assignedTo } = req.body;
 

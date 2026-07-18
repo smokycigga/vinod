@@ -58,7 +58,15 @@ const UserSchema = new mongoose.Schema({
     }
   },
   isActive: { type: Boolean, default: true },
+  // Per-user permission overrides applied ON TOP of the role-based defaults.
+  // Mirrors the `permissions` shape, e.g. { leads: { create: true } }. Only the
+  // keys present here are overridden; everything else falls back to the role.
+  permissionOverrides: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  },
   apiKey: { type: String, required: true, unique: true },
+
   emailConfig: {
     outlookEmail: { type: String, trim: true },
     outlookPassword: { type: String },
@@ -140,8 +148,26 @@ UserSchema.pre('save', function (next) {
       };
     }
   }
+
+  // Apply per-user permission overrides ON TOP of the role-based defaults.
+  // Only the keys present in permissionOverrides are changed; the rest keep the
+  // role default. This lets us grant one-off rights (e.g. a specific staff member
+  // who may create leads) without changing their role or affecting other users.
+  if (this.permissionOverrides && typeof this.permissionOverrides === 'object') {
+    for (const moduleKey of Object.keys(this.permissionOverrides)) {
+      const moduleOverride = this.permissionOverrides[moduleKey];
+      if (!moduleOverride || typeof moduleOverride !== 'object') continue;
+      if (!this.permissions[moduleKey]) this.permissions[moduleKey] = {};
+      for (const actionKey of Object.keys(moduleOverride)) {
+        this.permissions[moduleKey][actionKey] = moduleOverride[actionKey];
+      }
+    }
+    this.markModified('permissions');
+  }
+
   this.updatedAt = new Date();
   next();
 });
+
 
 module.exports = mongoose.model('User', UserSchema); 
