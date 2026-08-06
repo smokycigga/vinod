@@ -5946,7 +5946,7 @@ h2,
   border-bottom: 2px solid #b0b8c8;
   white-space: normal;
   word-break: break-word;
-  min-width: 70px;
+  min-width: 20px;
   overflow: visible;
 }
 

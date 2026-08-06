@@ -57,7 +57,7 @@
 
                 function onMouseMove(e) {
                     const diff = e.clientX - startX;
-                    const newWidth = Math.max(60, startWidth + diff);
+                    const newWidth = Math.max(20, startWidth + diff);
                     th.style.width = newWidth + 'px';
                     th.style.minWidth = newWidth + 'px';
 

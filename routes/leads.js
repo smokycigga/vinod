@@ -227,7 +227,7 @@ router.get('/', async (req, res) => {
         const latestTasks = await Task.aggregate([
             { $match: { lead: { $in: leadIds } } },
             { $sort: { updatedAt: -1 } },
-            { $group: { _id: '$lead', action: { $first: '$action' }, status: { $first: '$status' }, statusDetails: { $first: '$statusDetails' }, remarks: { $first: '$remarks' }, updatedAt: { $first: '$updatedAt' }, dueDate: { $first: '$dueDate' } } }
+            { $group: { _id: '$lead', taskId: { $first: '$_id' }, action: { $first: '$action' }, status: { $first: '$status' }, statusDetails: { $first: '$statusDetails' }, remarks: { $first: '$remarks' }, updatedAt: { $first: '$updatedAt' }, dueDate: { $first: '$dueDate' } } }
         ]);
 
         const taskMap = {};

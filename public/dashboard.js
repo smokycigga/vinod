@@ -1140,9 +1140,11 @@ function renderLeadsTable() {
         const leadDate = lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('en-GB') : 'N/A';
 
         // Latest Task cell
-        let lastTaskHtml = '<span style="color:#9CA3AF;">—</span>';
+        const companyNameEscaped = (lead.companyName || '').replace(/'/g, "\\'");
+        let lastTaskHtml = `<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); openAddTaskForLead('${lead._id}', '${companyNameEscaped}')" style="font-size:11px;padding:3px 8px;border-radius:4px;" title="Create a new task for this lead">+ Task</button>`;
         if (lead.latestTask) {
             const t = lead.latestTask;
+            const taskId = t.taskId || t._id;
             const taskAction = (t.action || '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
             const taskStatus = t.status || 'pending';
             const taskUpdated = t.updatedAt ? new Date(t.updatedAt) : null;
@@ -1158,14 +1160,20 @@ function renderLeadsTable() {
             const taskColor = taskStatusColors[taskStatus] || '#6B7280';
             const taskDetail = t.remarks || t.statusDetails || '';
             lastTaskHtml = `
-                <div style="display:flex;flex-direction:column;gap:2px;min-width:120px;">
-                    <span style="font-size:12px;font-weight:600;color:#1E293B;">${taskAction}</span>
-                    <div style="display:flex;align-items:center;gap:4px;">
-                        <span style="width:6px;height:6px;border-radius:50%;background:${taskColor};display:inline-block;flex-shrink:0;"></span>
-                        <span style="font-size:11px;color:${taskColor};font-weight:500;">${taskStatus}</span>
-                        ${timeAgo ? `<span style="font-size:11px;color:#94A3B8;">· ${timeAgo}</span>` : ''}
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:110px;">
+                    <div style="display:flex;flex-direction:column;gap:2px;cursor:pointer;flex:1;overflow:hidden;" onclick="event.stopPropagation(); editTask('${taskId}')" title="Click to view & edit task details">
+                        <span style="font-size:12px;font-weight:600;color:#1E293B;">${taskAction}</span>
+                        <div style="display:flex;align-items:center;gap:4px;">
+                            <span style="width:6px;height:6px;border-radius:50%;background:${taskColor};display:inline-block;flex-shrink:0;"></span>
+                            <span style="font-size:11px;color:${taskColor};font-weight:500;">${taskStatus}</span>
+                            ${timeAgo ? `<span style="font-size:11px;color:#94A3B8;">· ${timeAgo}</span>` : ''}
+                        </div>
+                        ${taskDetail ? `<span style="font-size:11px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;" title="${taskDetail}">${taskDetail}</span>` : ''}
                     </div>
-                    ${taskDetail ? `<span style="font-size:11px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;" title="${taskDetail}">${taskDetail}</span>` : ''}
+                    <div style="display:flex;gap:2px;flex-shrink:0;">
+                        <button class="btn-icon" onclick="event.stopPropagation(); editTask('${taskId}')" title="Edit Task" style="width:24px;height:24px;padding:2px;"><ion-icon name="create-outline" style="font-size:13px;"></ion-icon></button>
+                        ${taskStatus !== 'completed' ? `<button class="btn-icon check" onclick="event.stopPropagation(); completeTaskFromLead('${taskId}')" title="Mark Completed" style="width:24px;height:24px;padding:2px;color:#10B981;"><ion-icon name="checkmark-done-outline" style="font-size:13px;"></ion-icon></button>` : ''}
+                    </div>
                 </div>`;
         }
 
@@ -4241,6 +4249,7 @@ async function handleEditTask(e) {
 
             if (currentSection === 'tasks') loadTasks();
             else if (currentSection === 'dashboard') loadDashboardData();
+            else if (currentSection === 'leads') loadLeads();
         } catch (error) {
             showNotification('Error updating notes: ' + error.message, 'error');
         }
@@ -4283,6 +4292,7 @@ async function handleEditTask(e) {
 
             if (currentSection === 'tasks') loadTasks();
             else if (currentSection === 'dashboard') loadDashboardData();
+            else if (currentSection === 'leads') loadLeads();
         } catch (error) {
             showNotification('Error updating task: ' + error.message, 'error');
         }
@@ -4308,6 +4318,27 @@ async function completeTask(id) {
 
         if (currentSection === 'tasks') loadTasks();
         else if (currentSection === 'dashboard') loadDashboardData();
+        else if (currentSection === 'leads') loadLeads();
+    } catch (error) {
+        showNotification('Error completing task: ' + error.message, 'error');
+    }
+}
+
+async function completeTaskFromLead(id) {
+    if (!confirm('Mark this task as completed?')) return;
+    try {
+        const response = await fetch(`${API_BASE}/tasks/${id}/complete`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to complete task');
+        showNotification('Task marked as completed', 'success');
+        loadLeads();
+        if (typeof loadTasks === 'function') loadTasks();
     } catch (error) {
         showNotification('Error completing task: ' + error.message, 'error');
     }
