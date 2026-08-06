@@ -469,8 +469,21 @@
             </div>
 
             <div class="table-container">
-                <div class="leads-grid-toolbar">
-                    <span class="leads-grid-info">↔ Drag column borders to resize &nbsp;|&nbsp; First column is frozen</span>
+                <div class="leads-grid-toolbar" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <span class="leads-grid-info">↔ Drag column borders to resize &nbsp;|&nbsp; ↕ Click header to sort</span>
+                    <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+                        <label style="font-size:12px;color:#64748B;font-weight:600;">Sort By:</label>
+                        <select id="leadsSortSelect" onchange="handleLeadSortChange(this.value)" style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;cursor:pointer;">
+                            <option value="createdAt-desc">Lead Date (Newest First)</option>
+                            <option value="createdAt-asc">Lead Date (Oldest First)</option>
+                            <option value="serialNumber-asc">Lead Number (1 → N)</option>
+                            <option value="serialNumber-desc">Lead Number (N → 1)</option>
+                            <option value="companyName-asc">Company Name (A → Z)</option>
+                            <option value="companyName-desc">Company Name (Z → A)</option>
+                            <option value="contactPerson-asc">Contact Person (A → Z)</option>
+                            <option value="status-asc">Status (A → Z)</option>
+                        </select>
+                    </div>
                     <button class="leads-grid-reset-btn" onclick="resetLeadsGridWidths()" title="Reset all column widths">
                         <ion-icon name="refresh-outline" style="font-size:13px;"></ion-icon> Reset Widths
                     </button>
@@ -480,15 +493,15 @@
                     <table class="modern-table" id="leadsTable">
                         <thead>
                             <tr>
-                                <th style="width:80px;min-width:20px;">Lead Number<div class="col-resize-handle"></div></th>
-                                <th style="width:110px;min-width:20px;">Lead Date<div class="col-resize-handle"></div></th>
-                                <th style="width:170px;min-width:20px;">Company Name<div class="col-resize-handle"></div></th>
-                                <th style="width:140px;min-width:20px;">Contact Person<div class="col-resize-handle"></div></th>
+                                <th style="width:80px;min-width:20px;cursor:pointer;" onclick="toggleLeadSortHeader('serialNumber')" title="Click to sort by Lead Number">Lead Number <span id="sort-icon-serialNumber" class="sort-icon"></span><div class="col-resize-handle"></div></th>
+                                <th style="width:110px;min-width:20px;cursor:pointer;" onclick="toggleLeadSortHeader('createdAt')" title="Click to sort by Lead Date">Lead Date <span id="sort-icon-createdAt" class="sort-icon">▼</span><div class="col-resize-handle"></div></th>
+                                <th style="width:170px;min-width:20px;cursor:pointer;" onclick="toggleLeadSortHeader('companyName')" title="Click to sort by Company Name">Company Name <span id="sort-icon-companyName" class="sort-icon"></span><div class="col-resize-handle"></div></th>
+                                <th style="width:140px;min-width:20px;cursor:pointer;" onclick="toggleLeadSortHeader('contactPerson')" title="Click to sort by Contact Person">Contact Person <span id="sort-icon-contactPerson" class="sort-icon"></span><div class="col-resize-handle"></div></th>
                                 <th style="width:120px;min-width:20px;">Designation<div class="col-resize-handle"></div></th>
                                 <th style="width:170px;min-width:20px;">Email<div class="col-resize-handle"></div></th>
                                 <th style="width:130px;min-width:20px;">Mobile<div class="col-resize-handle"></div></th>
-                                <th style="width:130px;min-width:20px;">Assigned To<div class="col-resize-handle"></div></th>
-                                <th style="width:130px;min-width:20px;">Status<div class="col-resize-handle"></div></th>
+                                <th style="width:130px;min-width:20px;cursor:pointer;" onclick="toggleLeadSortHeader('assignedTo')" title="Click to sort by Assigned To">Assigned To <span id="sort-icon-assignedTo" class="sort-icon"></span><div class="col-resize-handle"></div></th>
+                                <th style="width:130px;min-width:20px;cursor:pointer;" onclick="toggleLeadSortHeader('status')" title="Click to sort by Status">Status <span id="sort-icon-status" class="sort-icon"></span><div class="col-resize-handle"></div></th>
                                 <th style="width:190px;min-width:20px;">Updates<div class="col-resize-handle"></div></th>
                                 <th style="width:150px;min-width:20px;">Actions</th>
                             </tr>

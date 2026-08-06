@@ -917,6 +917,88 @@ let allLeadsData = [];
 let filteredLeadsData = [];
 
 // Create global search listener if it doesn't exist
+// Leads sorting state
+let currentLeadSortField = 'createdAt';
+let currentLeadSortOrder = 'desc';
+
+function applyLeadsSort() {
+    if (!filteredLeadsData) return;
+    filteredLeadsData.sort((a, b) => {
+        let valA, valB;
+        if (currentLeadSortField === 'serialNumber') {
+            valA = Number(a.serialNumber || 0);
+            valB = Number(b.serialNumber || 0);
+        } else if (currentLeadSortField === 'createdAt') {
+            valA = new Date(a.createdAt || 0).getTime();
+            valB = new Date(b.createdAt || 0).getTime();
+        } else if (currentLeadSortField === 'companyName') {
+            valA = (a.companyName || '').toLowerCase();
+            valB = (b.companyName || '').toLowerCase();
+        } else if (currentLeadSortField === 'contactPerson') {
+            valA = (a.contactPerson || (a.contacts?.[0]?.name) || '').toLowerCase();
+            valB = (b.contactPerson || (b.contacts?.[0]?.name) || '').toLowerCase();
+        } else if (currentLeadSortField === 'assignedTo') {
+            valA = (a.assignedTo?.fullName || a.assignedTo?.email || '').toLowerCase();
+            valB = (b.assignedTo?.fullName || b.assignedTo?.email || '').toLowerCase();
+        } else if (currentLeadSortField === 'status') {
+            valA = (a.status || '').toLowerCase();
+            valB = (b.status || '').toLowerCase();
+        } else {
+            valA = new Date(a.createdAt || 0).getTime();
+            valB = new Date(b.createdAt || 0).getTime();
+        }
+
+        if (valA < valB) return currentLeadSortOrder === 'asc' ? -1 : 1;
+        if (valA > valB) return currentLeadSortOrder === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    updateSortHeaderIcons();
+}
+
+function handleLeadSortChange(value) {
+    if (!value) return;
+    const parts = value.split('-');
+    currentLeadSortField = parts[0];
+    currentLeadSortOrder = parts[1] || 'asc';
+    applyLeadsSort();
+    currentLeadsPage = 1;
+    renderLeadsTable();
+}
+
+function toggleLeadSortHeader(field) {
+    if (currentLeadSortField === field) {
+        currentLeadSortOrder = currentLeadSortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentLeadSortField = field;
+        currentLeadSortOrder = field === 'createdAt' || field === 'serialNumber' ? 'desc' : 'asc';
+    }
+
+    const select = document.getElementById('leadsSortSelect');
+    if (select) {
+        select.value = `${currentLeadSortField}-${currentLeadSortOrder}`;
+    }
+
+    applyLeadsSort();
+    currentLeadsPage = 1;
+    renderLeadsTable();
+}
+
+function updateSortHeaderIcons() {
+    const fields = ['serialNumber', 'createdAt', 'companyName', 'contactPerson', 'assignedTo', 'status'];
+    fields.forEach(f => {
+        const iconEl = document.getElementById(`sort-icon-${f}`);
+        if (iconEl) {
+            if (f === currentLeadSortField) {
+                iconEl.textContent = currentLeadSortOrder === 'asc' ? ' ▲' : ' ▼';
+                iconEl.style.color = '#3B82F6';
+            } else {
+                iconEl.textContent = '';
+            }
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const leadSearch = document.getElementById('leadSearchInput');
     if (leadSearch) {
@@ -928,6 +1010,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 (lead.email && lead.email.toLowerCase().includes(searchTerm)) ||
                 (lead.mobile && lead.mobile.toLowerCase().includes(searchTerm))
             );
+            applyLeadsSort();
             currentLeadsPage = 1;
             renderLeadsTable();
         });
@@ -952,6 +1035,12 @@ async function loadLeads() {
         allLeadsData = allData.filter(lead => !isLeadClient(lead));
         console.log(`[LOAD_LEADS] Leads after client filtering: ${allLeadsData.length}`);
 
+        // Assign serial number 1..N based on creation date ascending (first added = 1)
+        const sortedChronological = [...allLeadsData].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+        sortedChronological.forEach((lead, idx) => {
+            lead.serialNumber = idx + 1;
+        });
+
         // Initial setup for search filtering if input has value
         const searchInput = document.getElementById('leadSearchInput');
         if (searchInput && searchInput.value) {
@@ -966,6 +1055,7 @@ async function loadLeads() {
             filteredLeadsData = [...allLeadsData];
         }
 
+        applyLeadsSort();
         renderLeadsTable();
     } catch (error) {
         console.error('[CRITICAL] leads error:', error);
