@@ -17,11 +17,16 @@ const Lead = require('../models/Lead');
 const { getFinancialYear } = require('../utils/invoiceNumbering');
 const { generateInvoiceWord } = require('../utils/wordGenerator');
 const { isLeadClient, leadClientQuery, normalizeLeadClientFields } = require('../utils/leadClient');
-const { canDelete, canSignInvoices, denyDelete } = require('../utils/accessControl');
+const { canAccessModule, canDelete, canSignInvoices, denyDelete, requireModuleAccess } = require('../utils/accessControl');
 const moment = require('moment-timezone');
 
 // All routes require authentication
 router.use(auth);
+
+// A user with `invoices.access` explicitly denied cannot touch this module at
+// all — list, read, PDF, numbering, customers, billing companies, everything.
+// Mounted router-wide so no individual route can be missed.
+router.use(requireModuleAccess('invoices'));
 
 // ─── Admin-only guard ────────────────────────────────────────────────────────
 function adminOnly(req, res, next) {
@@ -65,6 +70,18 @@ function isUserEmail(user, email) {
 
 async function getVinodApprover() {
     return User.findOne({ email: VINOD_EMAIL, role: 'superadmin', isActive: true }).select('_id email fullName username');
+}
+
+/**
+ * Resolve notification recipients for `query`, dropping anyone who has no access
+ * to the invoices module. Without this, the superadmin fan-outs below would
+ * notify a user who cannot open the invoice the notification refers to.
+ *
+ * `permissionOverrides` must be selected for canAccessModule to see the denial.
+ */
+async function findInvoiceRecipients(query) {
+    const users = await User.find(query).select('_id role permissionOverrides');
+    return users.filter((candidate) => canAccessModule(candidate, 'invoices'));
 }
 
 async function getInvoiceApprovalAssignment(user) {
@@ -692,8 +709,8 @@ router.post('/', async (req, res) => {
         // Notify superadmins about invoices that need approval
         if (invoice.approvalStatus === 'pending') {
             const approvers = invoice.assignedApprover
-                ? await User.find({ _id: invoice.assignedApprover }).select('_id')
-                : await User.find({ role: 'superadmin' }).select('_id');
+                ? await findInvoiceRecipients({ _id: invoice.assignedApprover })
+                : await findInvoiceRecipients({ role: 'superadmin' });
             const creatorName = req.user.fullName || req.user.username || req.user.email || 'A user';
             if (approvers.length > 0) {
                 await Notification.insertMany(
@@ -708,10 +725,10 @@ router.post('/', async (req, res) => {
             }
         } else {
             // Auto-approved (superadmin created) — notify other superadmins
-            const superadmins = await User.find({
+            const superadmins = await findInvoiceRecipients({
                 role: 'superadmin',
                 _id: { $ne: req.user._id }
-            }).select('_id');
+            });
             const creatorName = req.user.fullName || req.user.username || req.user.email || 'A user';
             if (superadmins.length > 0) {
                 await Notification.insertMany(

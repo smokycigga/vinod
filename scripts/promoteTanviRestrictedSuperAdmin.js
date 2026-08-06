@@ -1,6 +1,6 @@
-// One-off: promote Tanvi to Super Admin with two carve-outs — she may not sign
-// (approve/reject) invoices, and she may not delete anything. Everything else
-// is full Super Admin.
+// One-off: promote Tanvi to Super Admin with two carve-outs — she has no access
+// to the invoices module at all, and she may not delete anything. Everything
+// else is full Super Admin.
 //
 // Uses the per-user permissionOverrides mechanism (models/User.js), which the
 // pre('save') hook applies ON TOP of the role defaults. The route guards in
@@ -41,11 +41,15 @@ async function run() {
             ? { ...user.permissionOverrides }
             : {};
 
-        // May create and edit invoices, but never sign (approve/reject) or delete them.
+        // No invoice access whatsoever — the module is gated router-wide on
+        // `access`, so this alone blocks list, read, PDF, create and edit. The
+        // finer-grained flags stay false so nothing re-opens if `access` is
+        // ever restored.
         overrides.invoices = {
             ...(overrides.invoices || {}),
-            create: true,
-            edit: true,
+            access: false,
+            create: false,
+            edit: false,
             approve: false,
             delete: false
         };
@@ -66,8 +70,9 @@ async function run() {
 
         console.log('\n--- Result ---');
         console.log('role                :', refreshed.role);
-        console.log('invoices.create     :', refreshed.permissions?.invoices?.create);
-        console.log('invoices.edit       :', refreshed.permissions?.invoices?.edit);
+        console.log('invoices.access     :', refreshed.permissions?.invoices?.access, '(must be false)');
+        console.log('invoices.create     :', refreshed.permissions?.invoices?.create, '(must be false)');
+        console.log('invoices.edit       :', refreshed.permissions?.invoices?.edit, '(must be false)');
         console.log('invoices.approve    :', refreshed.permissions?.invoices?.approve, '(must be false)');
         console.log('invoices.delete     :', refreshed.permissions?.invoices?.delete, '(must be false)');
         console.log('leads.create        :', refreshed.permissions?.leads?.create, '(preserved)');

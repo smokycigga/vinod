@@ -360,9 +360,16 @@ function canDeleteModule(module) {
     return value !== undefined && value !== false && value !== 'none';
 }
 
+// Coarsest gate: false means the module is hidden outright. Mirrors
+// canAccessModule() in utils/accessControl.js.
+function canAccessModule(module) {
+    return !isExplicitlyDenied(module, 'access');
+}
+
 // Signing an invoice happens via the approve action, so both are gated on the
 // same permission. Mirrors canSignInvoices() in utils/accessControl.js.
 function canSignInvoices() {
+    if (!canAccessModule('invoices')) return false;
     if (currentUser?.role !== 'superadmin') return false;
     return !isExplicitlyDenied('invoices', 'approve');
 }
@@ -397,6 +404,16 @@ function applyRoleBasedUI() {
     if (!permissions.analytics || !permissions.analytics.view) {
         const analyticsNav = document.querySelector('[onclick="showSection(\'analytics\')"]');
         if (analyticsNav) analyticsNav.style.display = 'none';
+    }
+
+    // Hide invoice nav and sections when the user has no invoice access at all
+    if (!canAccessModule('invoices')) {
+        const invoiceNav = document.querySelector('[data-section="invoices"]');
+        if (invoiceNav) invoiceNav.style.display = 'none';
+        const invoiceSection = document.getElementById('invoices-section');
+        if (invoiceSection) invoiceSection.style.display = 'none';
+        const invoiceSettingsSection = document.getElementById('invoice-settings-section');
+        if (invoiceSettingsSection) invoiceSettingsSection.style.display = 'none';
     }
 
     // Show/hide superadmin-only elements
@@ -537,7 +554,16 @@ function getPermissionLevel(module, action) {
 }
 
 // Navigation
+const INVOICE_SECTIONS = ['invoices', 'invoice-settings'];
+
 function showSection(sectionName) {
+    // A user without invoice access cannot open any invoice screen, including
+    // via a stale link or a notification deep-link.
+    if (INVOICE_SECTIONS.includes(sectionName) && !canAccessModule('invoices')) {
+        showNotification('You do not have access to Invoices.', 'warning');
+        return;
+    }
+
     if (sectionName === 'invoice-settings' && currentUser?.role !== 'superadmin' && !isDeveloperModeEnabled()) {
         showNotification('Only Super Admin can access Invoice Settings.', 'warning');
         sectionName = 'invoices';

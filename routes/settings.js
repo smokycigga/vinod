@@ -3,6 +3,7 @@ const router = express.Router();
 const Settings = require('../models/Settings');
 const ActivityLog = require('../models/ActivityLog');
 const auth = require('../middleware/auth');
+const { requireModuleAccess } = require('../utils/accessControl');
 
 // All routes require authentication
 router.use(auth);
@@ -289,7 +290,7 @@ router.put('/backup', async (req, res) => {
 
 // Trigger manual backup
 // Update invoice defaults (superadmin only)
-router.put('/invoice-defaults', async (req, res) => {
+router.put('/invoice-defaults', requireModuleAccess('invoices'), async (req, res) => {
     if (req.user.role !== 'superadmin') {
         return res.status(403).json({ message: 'Super Admin access required.' });
     }

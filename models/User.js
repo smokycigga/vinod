@@ -58,6 +58,7 @@ const UserSchema = new mongoose.Schema({
       view: { type: String, enum: ['all', 'department', 'team', 'own', 'none'], default: 'own' }
     },
     invoices: {
+      access: { type: Boolean, default: false },
       create: { type: Boolean, default: false },
       edit: { type: Boolean, default: false },
       // `approve` is the signing step: POST /api/invoices/:id/approve generates
@@ -111,7 +112,7 @@ UserSchema.pre('save', function (next) {
         analytics: { view: 'all' },
         settings: { view: true, edit: true },
         communications: { send: true, view: 'all' },
-        invoices: { create: true, edit: true, approve: true, delete: true }
+        invoices: { access: true, create: true, edit: true, approve: true, delete: true }
       };
     } else if (this.role === 'admin') {
       // Admin - Department-level access, can create Managers, NO delete permission for leads
@@ -123,7 +124,7 @@ UserSchema.pre('save', function (next) {
         analytics: { view: 'department' },
         settings: { view: true, edit: true },
         communications: { send: true, view: 'department' },
-        invoices: { create: true, edit: true, approve: false, delete: false }
+        invoices: { access: true, create: true, edit: true, approve: false, delete: false }
       };
     } else if (this.role === 'manager') {
       // Manager - Team-level access, NO user management
@@ -135,7 +136,7 @@ UserSchema.pre('save', function (next) {
         analytics: { view: 'team' },
         settings: { view: false, edit: false },
         communications: { send: true, view: 'team' },
-        invoices: { create: true, edit: true, approve: false, delete: false }
+        invoices: { access: true, create: true, edit: true, approve: false, delete: false }
       };
     } else if (this.role === 'client') {
       // Client - Can only view their own limited dashboard/agreements
@@ -147,7 +148,9 @@ UserSchema.pre('save', function (next) {
         analytics: { view: 'none' },
         settings: { view: false, edit: false },
         communications: { send: false, view: 'none' },
-        invoices: { create: false, edit: false, approve: false, delete: false }
+        // `access` stays true: clients reach GET /api/invoices/client/agreements
+        // to fetch their own signed agreements.
+        invoices: { access: true, create: false, edit: false, approve: false, delete: false }
       };
     } else {
       // Staff - Can only see and update assigned leads (status & remarks only)
@@ -159,7 +162,7 @@ UserSchema.pre('save', function (next) {
         analytics: { view: 'own' },
         settings: { view: false, edit: false },
         communications: { send: true, view: 'own' },
-        invoices: { create: true, edit: true, approve: false, delete: false }
+        invoices: { access: true, create: true, edit: true, approve: false, delete: false }
       };
     }
   }
