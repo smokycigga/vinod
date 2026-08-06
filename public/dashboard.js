@@ -1088,6 +1088,14 @@ function renderLeadsTable() {
     }
 
 
+    // Assign chronological serial numbers to all leads
+    if (typeof allLeadsData !== 'undefined' && allLeadsData.length > 0) {
+        const sortedForSerial = [...allLeadsData].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        sortedForSerial.forEach((lead, index) => {
+            lead.serialNumber = index + 1;
+        });
+    }
+
     if (filteredLeadsData.length === 0) {
         emptyState.style.display = 'flex';
         tableElement.style.display = 'none';
@@ -1128,7 +1136,7 @@ function renderLeadsTable() {
         const displayEmail = lead.email || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].email : '');
         const displayMobile = lead.mobile || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].mobile : '');
 
-        const leadNumber = lead.leadNumber || lead.customerCode || 'L-' + lead._id.substring(lead._id.length - 6).toUpperCase();
+        const leadNumber = lead.serialNumber || (startIndex + index + 1);
         const leadDate = lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('en-GB') : 'N/A';
 
         return `
