@@ -468,35 +468,36 @@
                 <button class="filter-btn" onclick="filterLeadsByAssignment('not-assigned')">Not Assigned</button>
             </div>
 
-            <div class="leads-grid-toolbar">
-                <span class="leads-grid-info">↔ Drag column borders to resize &nbsp;|&nbsp; First column is frozen</span>
-                <button class="leads-grid-reset-btn" onclick="resetLeadsGridWidths()" title="Reset all column widths">
-                    <ion-icon name="refresh-outline" style="font-size:13px;"></ion-icon> Reset Widths
-                </button>
-            </div>
+            <div class="table-container">
+                <div class="leads-grid-toolbar">
+                    <span class="leads-grid-info">↔ Drag column borders to resize &nbsp;|&nbsp; First column is frozen</span>
+                    <button class="leads-grid-reset-btn" onclick="resetLeadsGridWidths()" title="Reset all column widths">
+                        <ion-icon name="refresh-outline" style="font-size:13px;"></ion-icon> Reset Widths
+                    </button>
+                </div>
 
-            <div class="leads-grid-wrapper">
-                <table class="modern-table" id="leadsTable">
-                    <thead>
-                        <tr>
-                            <th style="width:80px;min-width:60px;">Lead Number<div class="col-resize-handle"></div></th>
-                            <th style="width:110px;min-width:80px;">Lead Date<div class="col-resize-handle"></div></th>
-                            <th style="width:170px;min-width:100px;">Company Name<div class="col-resize-handle"></div></th>
-                            <th style="width:140px;min-width:90px;">Contact Person<div class="col-resize-handle"></div></th>
-                            <th style="width:120px;min-width:80px;">Designation<div class="col-resize-handle"></div></th>
-                            <th style="width:170px;min-width:100px;">Email<div class="col-resize-handle"></div></th>
-                            <th style="width:130px;min-width:90px;">Mobile<div class="col-resize-handle"></div></th>
-                            <th style="width:130px;min-width:90px;">Assigned To<div class="col-resize-handle"></div></th>
-                            <th style="width:130px;min-width:90px;">Status<div class="col-resize-handle"></div></th>
-                            <th style="width:190px;min-width:120px;">Updates<div class="col-resize-handle"></div></th>
-                            <th style="width:150px;min-width:120px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leadsTableBody"></tbody>
-                </table>
-            </div>
+                <div class="leads-grid-wrapper">
+                    <table class="modern-table" id="leadsTable">
+                        <thead>
+                            <tr>
+                                <th style="width:80px;min-width:60px;">Lead Number<div class="col-resize-handle"></div></th>
+                                <th style="width:110px;min-width:80px;">Lead Date<div class="col-resize-handle"></div></th>
+                                <th style="width:170px;min-width:100px;">Company Name<div class="col-resize-handle"></div></th>
+                                <th style="width:140px;min-width:90px;">Contact Person<div class="col-resize-handle"></div></th>
+                                <th style="width:120px;min-width:80px;">Designation<div class="col-resize-handle"></div></th>
+                                <th style="width:170px;min-width:100px;">Email<div class="col-resize-handle"></div></th>
+                                <th style="width:130px;min-width:90px;">Mobile<div class="col-resize-handle"></div></th>
+                                <th style="width:130px;min-width:90px;">Assigned To<div class="col-resize-handle"></div></th>
+                                <th style="width:130px;min-width:90px;">Status<div class="col-resize-handle"></div></th>
+                                <th style="width:190px;min-width:120px;">Updates<div class="col-resize-handle"></div></th>
+                                <th style="width:150px;min-width:120px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leadsTableBody"></tbody>
+                    </table>
+                </div>
 
-            <div id="leadsEmptyState" class="empty-state"
+                <div id="leadsEmptyState" class="empty-state"
                     style="display: none; padding: 40px; text-align: center; color: #64748B;">
                     <ion-icon name="people-outline"
                         style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;"></ion-icon>

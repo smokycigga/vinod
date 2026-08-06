@@ -25,15 +25,23 @@
                 th.style.minWidth = saved[i] + 'px';
             }
 
-            // Skip last column (Actions) resize to keep buttons tidy
+            // Skip last column (Actions)
             if (i === headers.length - 1) return;
 
-            // Create resize handle
-            const handle = document.createElement('div');
-            handle.className = 'col-resize-handle';
-            th.appendChild(handle);
+            // Use existing hardcoded handle OR create one if missing
+            let handle = th.querySelector('.col-resize-handle');
+            if (!handle) {
+                handle = document.createElement('div');
+                handle.className = 'col-resize-handle';
+                th.appendChild(handle);
+            }
 
-            let startX, startWidth, nextTh, nextStartWidth;
+            // Remove any stale listeners by cloning (safe approach)
+            const newHandle = handle.cloneNode(true);
+            handle.parentNode.replaceChild(newHandle, handle);
+            handle = newHandle;
+
+            let startX, startWidth;
 
             handle.addEventListener('mousedown', (e) => {
                 e.preventDefault();
@@ -41,8 +49,6 @@
 
                 startX = e.clientX;
                 startWidth = th.offsetWidth;
-                nextTh = headers[i + 1] || null;
-                nextStartWidth = nextTh ? nextTh.offsetWidth : null;
 
                 document.body.style.cursor = 'col-resize';
                 document.body.style.userSelect = 'none';
@@ -92,7 +98,6 @@
 
     // Init on DOMContentLoaded
     document.addEventListener('DOMContentLoaded', () => {
-        // Slight delay to ensure table is in DOM
-        setTimeout(initLeadsGrid, 500);
+        setTimeout(initLeadsGrid, 600);
     });
 })();
