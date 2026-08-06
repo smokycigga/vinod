@@ -660,13 +660,11 @@ async function loadDashboardOverview() {
             console.log('Dashboard overview data:', data);
 
             // Update dashboard stats safely
-            const totalLeadsEl = document.getElementById('totalLeads');
             const totalLeadsMetricEl = document.getElementById('totalLeadsMetric');
             const closedDealsEl = document.getElementById('closedDeals');
             const closedDealsMetricEl = document.getElementById('closedDealsMetric');
             const pendingTasksEl = document.getElementById('pendingTasks');
 
-            if (totalLeadsEl) totalLeadsEl.textContent = data.stats.leads.total;
             if (totalLeadsMetricEl) totalLeadsMetricEl.textContent = data.stats.leads.total;
             if (closedDealsEl) closedDealsEl.textContent = data.stats.leads.byStatus.won || 0;
             if (closedDealsMetricEl) closedDealsMetricEl.textContent = data.stats.leads.byStatus.won || 0;
@@ -782,20 +780,14 @@ async function loadDashboardDataFallback() {
 
         // Update UI with retry
         setTimeout(() => {
-            const totalLeadsEl = document.getElementById('totalLeads');
             const closedDealsEl = document.getElementById('closedDeals');
             const pendingTasksEl = document.getElementById('pendingTasks');
 
             console.log('Updating elements:', {
-                totalLeadsEl: !!totalLeadsEl,
                 closedDealsEl: !!closedDealsEl,
                 pendingTasksEl: !!pendingTasksEl
             });
 
-            if (totalLeadsEl) {
-                totalLeadsEl.textContent = totalLeads;
-                console.log('Set totalLeads to:', totalLeads);
-            }
             const totalLeadsMetricEl = document.getElementById('totalLeadsMetric');
             if (totalLeadsMetricEl) {
                 totalLeadsMetricEl.textContent = totalLeads;
@@ -1089,11 +1081,19 @@ function renderLeadsTable() {
 
 
     // Assign chronological serial numbers to all leads
-    if (typeof allLeadsData !== 'undefined' && allLeadsData.length > 0) {
-        const sortedForSerial = [...allLeadsData].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-        sortedForSerial.forEach((lead, index) => {
-            lead.serialNumber = index + 1;
-        });
+    try {
+        if (typeof allLeadsData !== 'undefined' && allLeadsData.length > 0) {
+            const sortedForSerial = [...allLeadsData].sort((a, b) => {
+                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                return dateA - dateB;
+            });
+            sortedForSerial.forEach((lead, index) => {
+                lead.serialNumber = index + 1;
+            });
+        }
+    } catch (error) {
+        console.error('[CRITICAL] Error assigning serial numbers:', error);
     }
 
     if (filteredLeadsData.length === 0) {
