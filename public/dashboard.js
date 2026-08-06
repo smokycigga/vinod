@@ -973,7 +973,7 @@ async function loadLeads() {
         if (leadsTableBody) {
             leadsTableBody.innerHTML = `
                 <tr>
-                    <td colspan="10" class="text-center text-danger" style="padding: 40px;">
+                    <td colspan="11" class="text-center text-danger" style="padding: 40px;">
                         <ion-icon name="alert-circle-outline" style="font-size: 32px; margin-bottom: 8px;"></ion-icon>
                         <div style="font-weight: 700;">Error loading leads</div>
                         <div style="font-size: 13px; margin-top: 4px; color: #64748B;">${error.message}</div>
