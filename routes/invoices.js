@@ -17,6 +17,7 @@ const Lead = require('../models/Lead');
 const { getFinancialYear } = require('../utils/invoiceNumbering');
 const { generateInvoiceWord } = require('../utils/wordGenerator');
 const { isLeadClient, leadClientQuery, normalizeLeadClientFields } = require('../utils/leadClient');
+const { canDelete, canSignInvoices, denyDelete } = require('../utils/accessControl');
 const moment = require('moment-timezone');
 
 // All routes require authentication
@@ -67,14 +68,17 @@ async function getVinodApprover() {
 }
 
 async function getInvoiceApprovalAssignment(user) {
-    if (isUserEmail(user, KOMAL_EMAIL)) {
+    // Superadmins who may not sign must never have their own invoices
+    // auto-approved (that would be self-signing). Route them to Vinod for
+    // approval instead — same handling Komal has always had.
+    if (isUserEmail(user, KOMAL_EMAIL) || !canSignInvoices(user)) {
         const vinod = await getVinodApprover();
-        if (vinod) {
+        if (vinod && vinod._id.toString() !== String(user._id)) {
             return { approvalStatus: 'pending', assignedApprover: vinod._id };
         }
     }
 
-    if (user.role === 'superadmin') {
+    if (user.role === 'superadmin' && canSignInvoices(user)) {
         return { approvalStatus: 'approved', assignedApprover: null, approvedBy: user._id, approvedAt: new Date() };
     }
 
@@ -82,7 +86,7 @@ async function getInvoiceApprovalAssignment(user) {
 }
 
 function canApproveAssignedInvoice(user, invoice) {
-    if (user.role !== 'superadmin') return false;
+    if (!canSignInvoices(user)) return false;
     if (!invoice.assignedApprover) return true;
     return invoice.assignedApprover.toString() === user._id.toString();
 }
@@ -177,7 +181,7 @@ router.put('/billing-companies/:id', superadminOnly, async (req, res) => {
 });
 
 // DELETE /api/invoices/billing-companies/:id  — delete
-router.delete('/billing-companies/:id', superadminOnly, async (req, res) => {
+router.delete('/billing-companies/:id', superadminOnly, denyDelete('invoices'), async (req, res) => {
     try {
         const inUse = await Invoice.exists({ billingCompany: req.params.id });
         if (inUse) {
@@ -268,7 +272,7 @@ router.put('/customers/:id', superadminOnly, async (req, res) => {
 });
 
 // DELETE /api/invoices/customers/:id  — delete customer
-router.delete('/customers/:id', superadminOnly, async (req, res) => {
+router.delete('/customers/:id', superadminOnly, denyDelete('invoices'), async (req, res) => {
     try {
         const customer = await InvoiceCustomer.findByIdAndUpdate(
             req.params.id,
@@ -315,11 +319,16 @@ router.get('/', async (req, res) => {
         if (approvalStatus) {
             filter.approvalStatus = approvalStatus;
             if (approvalStatus === 'pending' && req.user.role === 'superadmin') {
-                filter.$or = [
-                    { assignedApprover: req.user._id },
-                    { assignedApprover: { $exists: false } },
-                    { assignedApprover: null }
-                ];
+                if (canSignInvoices(req.user)) {
+                    filter.$or = [
+                        { assignedApprover: req.user._id },
+                        { assignedApprover: { $exists: false } },
+                        { assignedApprover: null }
+                    ];
+                } else {
+                    // Cannot sign — no invoice is ever pending *their* approval.
+                    filter.assignedApprover = req.user._id;
+                }
             }
         }
         if (customerId) filter.customer = customerId;
@@ -495,7 +504,7 @@ router.put('/numbering/series/:fy', superadminOnly, async (req, res) => {
 });
 
 // DELETE /api/invoices/numbering/series/:fy  — delete sequence config for a financial year
-router.delete('/numbering/series/:fy', superadminOnly, async (req, res) => {
+router.delete('/numbering/series/:fy', superadminOnly, denyDelete('invoices'), async (req, res) => {
     try {
         const { fy } = req.params;
         const prefix = (req.query.prefix || 'KM').toString().trim() || 'KM';
@@ -903,7 +912,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/invoices/:id  — delete invoice
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', denyDelete('invoices'), async (req, res) => {
     try {
         const invoice = await Invoice.findById(req.params.id);
         if (!invoice) return res.status(404).json({ message: 'Invoice not found.' });
@@ -999,8 +1008,8 @@ function fmtINR(n) {
 
 // POST /api/invoices/:id/approve  — approve an invoice (superadmin only)
 router.post('/:id/approve', async (req, res) => {
-    if (req.user.role !== 'superadmin') {
-        return res.status(403).json({ message: 'Only Super Admin can approve invoices.' });
+    if (!canSignInvoices(req.user)) {
+        return res.status(403).json({ message: 'You do not have permission to approve or sign invoices.' });
     }
     try {
         const { note } = req.body;
@@ -1067,8 +1076,8 @@ router.post('/:id/approve', async (req, res) => {
 
 // POST /api/invoices/:id/reject  — reject an invoice (superadmin only)
 router.post('/:id/reject', async (req, res) => {
-    if (req.user.role !== 'superadmin') {
-        return res.status(403).json({ message: 'Only Super Admin can reject invoices.' });
+    if (!canSignInvoices(req.user)) {
+        return res.status(403).json({ message: 'You do not have permission to approve or reject invoices.' });
     }
     try {
         const { note } = req.body;
@@ -1313,7 +1322,7 @@ router.get('/:id/attachment/download', async (req, res) => {
 });
 
 // DELETE /api/invoices/:id/attachments/:index  — delete attachment
-router.delete('/:id/attachments/:index', superadminOnly, async (req, res) => {
+router.delete('/:id/attachments/:index', superadminOnly, denyDelete('invoices'), async (req, res) => {
     try {
         const invoice = await Invoice.findById(req.params.id);
         if (!invoice) return res.status(404).json({ message: 'Invoice not found.' });

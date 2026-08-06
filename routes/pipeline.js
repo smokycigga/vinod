@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Pipeline = require('../models/Pipeline');
+const auth = require('../middleware/auth');
+const { denyDelete } = require('../utils/accessControl');
 
 // Get all pipelines
 router.get('/', async (req, res) => {
@@ -80,7 +82,9 @@ router.patch('/:id', async (req, res) => {
 });
 
 // Delete a pipeline
-router.delete('/:id', async (req, res) => {
+// Deleting a pipeline is destructive, so this route (unlike the rest of this
+// file) requires authentication before the permission check.
+router.delete('/:id', auth, denyDelete('pipelines'), async (req, res) => {
     try {
         const pipeline = await Pipeline.findById(req.params.id);
         if (!pipeline) {

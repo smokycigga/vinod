@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const ActivityLog = require('../models/ActivityLog');
 const auth = require('../middleware/auth');
+const { denyDelete } = require('../utils/accessControl');
 
 // All routes require authentication
 router.use(auth);
@@ -239,7 +240,7 @@ router.get('/export', async (req, res) => {
 });
 
 // Delete old logs (Admin only, for maintenance)
-router.delete('/cleanup', async (req, res) => {
+router.delete('/cleanup', denyDelete('users'), async (req, res) => {
     try {
         if (req.user.role !== 'Admin') {
             return res.status(403).json({ message: 'Access denied. Admin only.' });

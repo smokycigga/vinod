@@ -4,6 +4,7 @@ const Task = require('../models/Task');
 const Lead = require('../models/Lead');
 const ActivityLog = require('../models/ActivityLog');
 const auth = require('../middleware/auth');
+const { canDelete, denyDelete } = require('../utils/accessControl');
 
 // All routes require authentication
 router.use(auth);
@@ -450,7 +451,7 @@ router.patch('/:id/complete', async (req, res) => {
 });
 
 // Delete task
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', denyDelete('tasks'), async (req, res) => {
     try {
         const task = await Task.findById(req.params.id);
 
@@ -468,7 +469,8 @@ router.delete('/:id', async (req, res) => {
         let hasPermission = false;
 
         if (req.user.role === 'superadmin') {
-            hasPermission = true;
+            // Honours an explicit `tasks.delete` denial; see utils/accessControl.js.
+            hasPermission = canDelete(req.user, 'tasks');
         } else if (req.user.role === 'admin') {
             const deptUsers = await User.find({ department: req.user.department }).select('_id');
             const deptUserIds = deptUsers.map(u => u._id.toString());

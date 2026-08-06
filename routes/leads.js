@@ -4,6 +4,7 @@ const Lead = require('../models/Lead');
 const ActivityLog = require('../models/ActivityLog');
 const auth = require('../middleware/auth');
 const { isLeadClient, normalizeLeadClientFields } = require('../utils/leadClient');
+const { canDelete, denyDelete } = require('../utils/accessControl');
 
 function escapeCsv(value) {
     const text = value == null ? '' : String(value);
@@ -694,7 +695,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete a lead (SuperAdmin and Admin only, Manager for their team)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', denyDelete('leads'), async (req, res) => {
     try {
         console.log(`[DELETE LEAD] ID: ${req.params.id}, User: ${req.user.email} (${req.user.role})`);
         
@@ -715,7 +716,8 @@ router.delete('/:id', async (req, res) => {
         // Check delete permission based on role hierarchy
         let hasAccess = false;
         if (req.user.role === 'superadmin') {
-            hasAccess = true;
+            // Honours an explicit `leads.delete` denial; see utils/accessControl.js.
+            hasAccess = canDelete(req.user, 'leads');
         } else if (req.user.role === 'manager') {
             // Manager can only delete leads assigned to their team
             const teamMembers = await User.find({ managerId: req.user._id }).select('_id');
@@ -810,7 +812,7 @@ router.post('/:id/notes', async (req, res) => {
 });
 
 // Delete note from lead
-router.delete('/:id/notes/:noteId', async (req, res) => {
+router.delete('/:id/notes/:noteId', denyDelete('leads'), async (req, res) => {
     try {
         const lead = await Lead.findById(req.params.id);
         if (!lead) {
@@ -973,7 +975,7 @@ router.post('/:id/attachments', async (req, res) => {
 });
 
 // Delete attachment from lead
-router.delete('/:id/attachments/:attachmentId', async (req, res) => {
+router.delete('/:id/attachments/:attachmentId', denyDelete('leads'), async (req, res) => {
     try {
         const lead = await Lead.findOne({ _id: req.params.id, user: req.user._id });
         if (!lead) {

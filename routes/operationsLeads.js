@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const OperationsLead = require('../models/OperationsLead');
 const auth = require('../middleware/auth');
+const { denyDelete } = require('../utils/accessControl');
 const ActivityLog = require('../models/ActivityLog');
 
 // All routes require authentication
@@ -251,7 +252,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete operations lead (Admin and Manager only)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', denyDelete('leads'), async (req, res) => {
     try {
         console.log(`[DELETE OPERATION] ID: ${req.params.id}, User: ${req.user.email} (${req.user.role})`);
         

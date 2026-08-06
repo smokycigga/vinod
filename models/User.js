@@ -31,7 +31,8 @@ const UserSchema = new mongoose.Schema({
     },
     pipelines: {
       view: { type: Boolean, default: true },
-      edit: { type: Boolean, default: false }
+      edit: { type: Boolean, default: false },
+      delete: { type: Boolean, default: false }
     },
     tasks: {
       view: { type: String, enum: ['all', 'department', 'team', 'assigned', 'none'], default: 'assigned' },
@@ -55,6 +56,15 @@ const UserSchema = new mongoose.Schema({
     communications: {
       send: { type: Boolean, default: true },
       view: { type: String, enum: ['all', 'department', 'team', 'own', 'none'], default: 'own' }
+    },
+    invoices: {
+      create: { type: Boolean, default: false },
+      edit: { type: Boolean, default: false },
+      // `approve` is the signing step: POST /api/invoices/:id/approve generates
+      // the signed PDF. Rejecting carries the same authority, so both are gated
+      // on this flag.
+      approve: { type: Boolean, default: false },
+      delete: { type: Boolean, default: false }
     }
   },
   isActive: { type: Boolean, default: true },
@@ -95,23 +105,25 @@ UserSchema.pre('save', function (next) {
       // Super Admin - Full access to everything, can create Admins (NO lead delete)
       this.permissions = {
         leads: { view: 'all', create: true, edit: 'all', delete: 'none', export: true, assign: true },
-        pipelines: { view: true, edit: true },
+        pipelines: { view: true, edit: true, delete: true },
         tasks: { view: 'all', create: true, edit: 'all', delete: 'all' },
         users: { view: 'all', create: 'admin', edit: 'all', delete: 'all' },
         analytics: { view: 'all' },
         settings: { view: true, edit: true },
-        communications: { send: true, view: 'all' }
+        communications: { send: true, view: 'all' },
+        invoices: { create: true, edit: true, approve: true, delete: true }
       };
     } else if (this.role === 'admin') {
       // Admin - Department-level access, can create Managers, NO delete permission for leads
       this.permissions = {
         leads: { view: 'department', create: true, edit: 'department', delete: 'none', export: true, assign: true },
-        pipelines: { view: true, edit: true },
+        pipelines: { view: true, edit: true, delete: true },
         tasks: { view: 'department', create: true, edit: 'department', delete: 'department' },
         users: { view: 'department', create: 'manager', edit: 'department', delete: 'department' },
         analytics: { view: 'department' },
         settings: { view: true, edit: true },
-        communications: { send: true, view: 'department' }
+        communications: { send: true, view: 'department' },
+        invoices: { create: true, edit: true, approve: false, delete: false }
       };
     } else if (this.role === 'manager') {
       // Manager - Team-level access, NO user management
@@ -122,7 +134,8 @@ UserSchema.pre('save', function (next) {
         users: { view: 'team', create: 'none', edit: 'none', delete: 'none' },
         analytics: { view: 'team' },
         settings: { view: false, edit: false },
-        communications: { send: true, view: 'team' }
+        communications: { send: true, view: 'team' },
+        invoices: { create: true, edit: true, approve: false, delete: false }
       };
     } else if (this.role === 'client') {
       // Client - Can only view their own limited dashboard/agreements
@@ -133,7 +146,8 @@ UserSchema.pre('save', function (next) {
         users: { view: 'none', create: 'none', edit: 'none', delete: 'none' },
         analytics: { view: 'none' },
         settings: { view: false, edit: false },
-        communications: { send: false, view: 'none' }
+        communications: { send: false, view: 'none' },
+        invoices: { create: false, edit: false, approve: false, delete: false }
       };
     } else {
       // Staff - Can only see and update assigned leads (status & remarks only)
@@ -144,7 +158,8 @@ UserSchema.pre('save', function (next) {
         users: { view: 'none', create: 'none', edit: 'none', delete: 'none' },
         analytics: { view: 'own' },
         settings: { view: false, edit: false },
-        communications: { send: true, view: 'own' }
+        communications: { send: true, view: 'own' },
+        invoices: { create: true, edit: true, approve: false, delete: false }
       };
     }
   }

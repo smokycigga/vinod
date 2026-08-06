@@ -344,8 +344,31 @@ function getIdValue(value) {
     return typeof value === 'object' ? (value._id || '') : value;
 }
 
+// Mirrors utils/accessControl.js: only an EXPLICIT per-user override denies a
+// superadmin. Reading the merged permissions instead would misfire, since
+// superadmin's leads.delete is 'none' by role default. UI-only — the API is the
+// real enforcement.
+function isExplicitlyDenied(module, action) {
+    const value = currentUser?.permissionOverrides?.[module]?.[action];
+    return value === false || value === 'none';
+}
+
+function canDeleteModule(module) {
+    if (isExplicitlyDenied(module, 'delete')) return false;
+    if (currentUser?.role === 'superadmin') return true;
+    const value = currentUser?.permissions?.[module]?.delete;
+    return value !== undefined && value !== false && value !== 'none';
+}
+
+// Signing an invoice happens via the approve action, so both are gated on the
+// same permission. Mirrors canSignInvoices() in utils/accessControl.js.
+function canSignInvoices() {
+    if (currentUser?.role !== 'superadmin') return false;
+    return !isExplicitlyDenied('invoices', 'approve');
+}
+
 function canApproveInvoice(inv) {
-    if (currentUser?.role !== 'superadmin' || inv?.approvalStatus !== 'pending') return false;
+    if (!canSignInvoices() || inv?.approvalStatus !== 'pending') return false;
     const assignedApproverId = getIdValue(inv.assignedApprover);
     return !assignedApproverId || assignedApproverId === currentUser._id;
 }
@@ -392,6 +415,15 @@ function applyRoleBasedUI() {
         document.querySelectorAll('.invoice-superadmin-section:not(#invoicePendingTab)').forEach((item) => {
             item.style.display = '';
         });
+
+        // A superadmin who cannot sign never has invoices routed to them, so the
+        // pending-approvals queue is hidden entirely.
+        if (!canSignInvoices()) {
+            const pendingTabBtn = document.getElementById('invTabBtnPending');
+            if (pendingTabBtn) pendingTabBtn.style.display = 'none';
+            const pendingTab = document.getElementById('invoicePendingTab');
+            if (pendingTab) pendingTab.style.display = 'none';
+        }
     }
 
     if (!permissions.settings || !permissions.settings.view) {
@@ -480,6 +512,8 @@ function updateActionButtonsVisibility() {
 // Check if user has permission
 function hasPermission(module, action) {
     if (!currentUser || !currentUser.permissions) return false;
+    // An explicit per-user override always wins, even for the roles bypassed below.
+    if (isExplicitlyDenied(module, action)) return false;
     if (['superadmin', 'admin', 'manager'].includes(currentUser.role)) return true; // Admins and managers have all permissions
 
     const modulePerms = currentUser.permissions[module];
@@ -1086,7 +1120,7 @@ function renderLeadsTable() {
                     <div class="modern-actions">
                         ${!isStaff ? `<button class="btn-icon" onclick="event.stopPropagation(); editLead('${lead._id}')" title="Edit"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>` : ''}
                         ${!isLeadClient(lead) ? `<button class="btn-icon briefcase" onclick="event.stopPropagation(); convertToClient('${lead._id}', '${lead.companyName}')" title="Send to Client"><ion-icon name="briefcase-outline" class="icon-sm"></ion-icon></button>` : ''}
-                        ${['admin', 'superadmin', 'manager'].includes(currentUser?.role) ?
+                        ${['admin', 'superadmin', 'manager'].includes(currentUser?.role) && canDeleteModule('leads') ?
                 `<button class="btn-icon delete" onclick="event.stopPropagation(); deleteLead('${lead._id}')" title="Delete"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>` : ''}
                     </div>
                 </td>
@@ -1229,7 +1263,7 @@ async function loadTasks() {
                     <button class="btn btn-sm" onclick="viewTask('${task._id}')"><ion-icon name="eye-outline" class="icon-sm"></ion-icon></button>
                     <button class="btn btn-sm" onclick="editTask('${task._id}')"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>
                     <button class="btn btn-sm btn-success" onclick="completeTask('${task._id}')" ${task.status === 'completed' ? 'disabled' : ''}><ion-icon name="checkmark-outline" class="icon-sm"></ion-icon></button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteTask('${task._id}')"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>
+                    ${canDeleteModule('tasks') ? `<button class="btn btn-sm btn-danger" onclick="deleteTask('${task._id}')"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>` : ''}
                 </td>
             </tr>
         `}).join('');
@@ -2019,7 +2053,7 @@ function renderPipeline(leadsToRender) {
             const assignedUser = lead.assignedTo?.fullName || lead.assignedTo?.email || 'Unassigned';
 
             // Check if user has permission to delete (admin/superadmin/manager)
-            const canDelete = ['admin', 'superadmin', 'manager'].includes(currentUser?.role);
+            const canDelete = ['admin', 'superadmin', 'manager'].includes(currentUser?.role) && canDeleteModule('leads');
             // Only show delete button if lead is in 'new' column and user has permission
             const deleteHtml = (lead.status === 'new' && canDelete)
                 ? `<button onclick="deleteLead('${lead._id}')" class="btn-icon" style="color: #ef4444;" title="Delete"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>`
@@ -4257,7 +4291,7 @@ async function filterTasks(filter) {
                     <button class="btn btn-sm" onclick="viewTask('${task._id}')"><ion-icon name="eye-outline" class="icon-sm"></ion-icon></button>
                     <button class="btn btn-sm" onclick="editTask('${task._id}')"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>
                     <button class="btn btn-sm btn-success" onclick="completeTask('${task._id}')" ${task.status === 'completed' ? 'disabled' : ''}><ion-icon name="checkmark-outline" class="icon-sm"></ion-icon></button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteTask('${task._id}')"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>
+                    ${canDeleteModule('tasks') ? `<button class="btn btn-sm btn-danger" onclick="deleteTask('${task._id}')"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>` : ''}
                 </td>
             </tr>
         `;
@@ -5870,7 +5904,7 @@ async function loadInvoices() {
                     ${canEdit ? `<button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); openEditInvoiceModal('${inv._id}')" title="Edit" style="padding:3px 5px;margin:0 1px;"><ion-icon name="create-outline" style="font-size:14px;"></ion-icon></button>` : ''}
                     ${canDownloadPdf ? `<button class="btn btn-sm btn-success" onclick="event.stopPropagation(); downloadInvoicePDF('${inv._id}', '${inv.invoiceNumber}')" title="PDF" style="padding:3px 5px;margin:0 1px;"><ion-icon name="download-outline" style="font-size:14px;"></ion-icon></button>` : ''}
                     ${inv.approvalStatus === 'approved' ? `<button class="btn btn-sm btn-info" onclick="event.stopPropagation(); openRecordPaymentModal('${inv._id}', ${displayTotal})" title="Payment Received" style="padding:3px 5px;margin:0 1px;"><ion-icon name="cash-outline" style="font-size:14px;"></ion-icon></button>` : ''}
-                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteInvoice('${inv._id}')" title="Archive" style="padding:3px 5px;margin:0 1px;"><ion-icon name="archive-outline" style="font-size:14px;"></ion-icon></button>
+                    ${canDeleteModule('invoices') ? `<button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteInvoice('${inv._id}')" title="Archive" style="padding:3px 5px;margin:0 1px;"><ion-icon name="archive-outline" style="font-size:14px;"></ion-icon></button>` : ''}
                     ${canApprove ? `
                     <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); approveInvoice('${inv._id}')" title="Approve" style="padding:3px 5px;margin:0 1px;"><ion-icon name="checkmark-outline" style="font-size:14px;"></ion-icon></button>
                     <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); rejectInvoice('${inv._id}')" title="Reject" style="padding:3px 5px;margin:0 1px;"><ion-icon name="close-outline" style="font-size:14px;"></ion-icon></button>

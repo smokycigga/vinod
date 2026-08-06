@@ -4,6 +4,7 @@ const User = require('../models/User');
 const ActivityLog = require('../models/ActivityLog');
 const auth = require('../middleware/auth');
 const { requireAdmin, checkPermission } = require('../middleware/permissions');
+const { denyDelete, isRestrictedSuperAdmin } = require('../utils/accessControl');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 
@@ -265,6 +266,19 @@ router.put('/:id', async (req, res) => {
 
         if (!canEdit) {
             return res.status(403).json({ message: 'Access denied.' });
+        }
+
+        // A superadmin carrying explicit restrictions must not be able to lift
+        // them, either by changing their own role or by minting an unrestricted
+        // superadmin to act on their behalf.
+        if (isRestrictedSuperAdmin(req.user)) {
+            const requestedRole = req.body.role;
+            if (isSelf && requestedRole && requestedRole !== user.role) {
+                return res.status(403).json({ message: 'You cannot change your own role.' });
+            }
+            if (requestedRole === 'superadmin' && user.role !== 'superadmin') {
+                return res.status(403).json({ message: 'You do not have permission to grant Super Admin access.' });
+            }
         }
 
         // If updating self (and not admin), only allow certain fields
@@ -533,7 +547,7 @@ router.post('/:id/reset-password', requireAdmin, async (req, res) => {
 });
 
 // Delete user (Admin only)
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', requireAdmin, denyDelete('users'), async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
         if (!user) {
