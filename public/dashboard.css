@@ -5892,3 +5892,189 @@ h2,
     font-size: 18px;
   }
 }
+
+/* ============================================================
+   LEADS EXCEL GRID
+   ============================================================ */
+
+/* Wrapper: horizontal scroll, no overflow clip on rows */
+.leads-grid-wrapper {
+  overflow-x: auto;
+  overflow-y: visible;
+  border: 1.5px solid #c8cdd6;
+  border-radius: 6px;
+  background: #fff;
+  position: relative;
+}
+
+/* Core table */
+#leadsTable {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+  font-size: 13px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #fff;
+}
+
+/* All cells */
+#leadsTable th,
+#leadsTable td {
+  border: 1px solid #d0d4db;
+  padding: 0;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+
+/* Header cells */
+#leadsTable thead th {
+  background: #f0f2f5;
+  color: #374151;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 9px 10px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  user-select: none;
+  border-bottom: 2px solid #b0b8c8;
+  white-space: normal;
+  word-break: break-word;
+  min-width: 70px;
+}
+
+/* Freeze first column (Lead Number) */
+#leadsTable thead th:first-child,
+#leadsTable tbody td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: #f8fafc;
+  border-right: 2px solid #b0b8c8;
+}
+#leadsTable thead th:first-child {
+  z-index: 15;
+}
+
+/* Data cells padding */
+#leadsTable tbody td {
+  padding: 7px 10px;
+  color: #1e293b;
+  background: #fff;
+}
+
+/* Row hover — Excel-style light blue highlight */
+#leadsTable tbody tr:hover td {
+  background: #e8f0fe !important;
+  cursor: pointer;
+}
+
+/* Alternating row shading */
+#leadsTable tbody tr:nth-child(even) td {
+  background: #f9fafb;
+}
+#leadsTable tbody tr:nth-child(even):hover td {
+  background: #e8f0fe !important;
+}
+
+/* Resize handle — the draggable bar on column right edge */
+.col-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 20;
+  background: transparent;
+  transition: background 0.15s;
+}
+.col-resize-handle:hover,
+.col-resize-handle.active {
+  background: #4f7cff;
+  opacity: 0.7;
+}
+
+/* While resizing, disable text selection on whole page */
+#leadsTable.resizing,
+#leadsTable.resizing * {
+  user-select: none !important;
+  cursor: col-resize !important;
+}
+
+/* Status pills inside grid */
+#leadsTable .status-pill {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Action buttons inside grid */
+#leadsTable .modern-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+#leadsTable .btn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+}
+
+/* Company cell avatar in grid */
+#leadsTable .company-cell {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+#leadsTable .company-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* Reset widths button */
+.leads-grid-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #6b7280;
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+.leads-grid-reset-btn:hover {
+  color: #374151;
+  border-color: #9ca3af;
+  background: #f9fafb;
+}
+
+/* Toolbar above grid */
+.leads-grid-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 6px 0;
+}
+.leads-grid-info {
+  font-size: 12px;
+  color: #9ca3af;
+}
+

@@ -1200,6 +1200,9 @@ function renderLeadsTable() {
     }).join('');
 
     renderLeadPagination(totalPages);
+
+    // Re-attach Excel grid resize handles after render
+    if (typeof window.initLeadsGrid === 'function') window.initLeadsGrid();
 }
 
 function filterLeadsByAssignment(filterType) {
