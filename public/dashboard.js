@@ -981,7 +981,7 @@ async function loadLeads() {
         if (leadsTableBody) {
             leadsTableBody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center text-danger" style="padding: 40px;">
+                    <td colspan="10" class="text-center text-danger" style="padding: 40px;">
                         <ion-icon name="alert-circle-outline" style="font-size: 32px; margin-bottom: 8px;"></ion-icon>
                         <div style="font-weight: 700;">Error loading leads</div>
                         <div style="font-size: 13px; margin-top: 4px; color: #64748B;">${error.message}</div>
@@ -1110,7 +1110,7 @@ function renderLeadsTable() {
 
     const isStaff = currentUser?.role === 'staff';
 
-    tbody.innerHTML = paginatedLeads.map(lead => {
+    tbody.innerHTML = paginatedLeads.map((lead, index) => {
         const assignedUser = lead.assignedTo?.fullName || lead.assignedTo?.email || 'Unassigned';
         const companyName = lead.companyName || 'N/A';
         const companyInitial = companyName !== 'N/A' ? companyName.charAt(0).toUpperCase() : '?';
@@ -1128,8 +1128,13 @@ function renderLeadsTable() {
         const displayEmail = lead.email || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].email : '');
         const displayMobile = lead.mobile || (lead.contacts && lead.contacts.length > 0 ? lead.contacts[0].mobile : '');
 
+        const leadNumber = lead.leadNumber || lead.customerCode || 'L-' + lead._id.substring(lead._id.length - 6).toUpperCase();
+        const leadDate = lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('en-GB') : 'N/A';
+
         return `
             <tr class="clickable-row" onclick="handleLeadRowClick(event, '${lead._id}')">
+                <td>${leadNumber}</td>
+                <td>${leadDate}</td>
                 <td>
                     <div class="company-cell">
                         <div class="company-avatar">${companyInitial}</div>
