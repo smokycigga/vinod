@@ -89,6 +89,30 @@ async function notifyTaskHierarchy(task, type, message, senderId) {
     try {
         const recipients = [];
         
+        // Always notify assigner (creator) if not the sender
+        const creatorId = task.user?._id || task.user;
+        if (creatorId && creatorId.toString() !== senderId.toString()) {
+            recipients.push({
+                recipient: creatorId,
+                sender: senderId,
+                task: task._id,
+                type,
+                message
+            });
+        }
+
+        // Always notify assignee if not the sender
+        const assigneeId = task.assignedTo?._id || task.assignedTo;
+        if (assigneeId && assigneeId.toString() !== senderId.toString()) {
+            recipients.push({
+                recipient: assigneeId,
+                sender: senderId,
+                task: task._id,
+                type,
+                message
+            });
+        }
+
         // Always notify admins and superadmins
         const admins = await User.find({ 
             role: { $in: ['superadmin', 'admin'] },

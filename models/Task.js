@@ -28,6 +28,7 @@ const taskSchema = new mongoose.Schema({
     statusUpdates: [{
         text: String,
         authorName: String,
+        authorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         timestamp: { type: Date, default: Date.now }
     }],
     remarks: {

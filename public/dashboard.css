@@ -6003,6 +6003,42 @@ h2,
   opacity: 0.8;
 }
 
+/* Task Chat Bubbles */
+.task-chat-bubble {
+  max-width: 82%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.task-chat-bubble.sent {
+  align-self: flex-end;
+  background: #3B82F6;
+  color: #FFFFFF;
+  border-bottom-right-radius: 2px;
+}
+.task-chat-bubble.received {
+  align-self: flex-start;
+  background: #FFFFFF;
+  color: #1E293B;
+  border: 1px solid #E2E8F0;
+  border-bottom-left-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.task-chat-author {
+  font-weight: 600;
+  font-size: 11px;
+  margin-bottom: 2px;
+  opacity: 0.9;
+}
+.task-chat-time {
+  font-size: 10px;
+  opacity: 0.75;
+  margin-top: 3px;
+  text-align: right;
+}
+
 /* While resizing, disable text selection on whole page */
 #leadsTable.resizing,
 #leadsTable.resizing * {

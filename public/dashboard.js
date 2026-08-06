@@ -4166,18 +4166,25 @@ async function editTask(id) {
         document.getElementById('editTaskAssignedTo').value = task.assignedTo?._id || task.assignedTo || '';
         document.getElementById('editTaskNotes').value = task.notes || '';
 
-        // Display status updates / communication history
+        // Display status updates / communication history as chat bubbles
         const updatesContainer = document.getElementById('editTaskStatusUpdatesDisplay');
         if (updatesContainer) {
             if (task.statusUpdates && task.statusUpdates.length > 0) {
-                updatesContainer.innerHTML = task.statusUpdates.map(u => `
-                    <div class="status-update-item" style="padding:6px 10px;margin-bottom:6px;background:#f8fafc;border-left:3px solid #3b82f6;border-radius:4px;font-size:12px;">
-                        <div style="font-weight:600;color:#1e293b;">${u.authorName || 'User'} <span style="font-weight:400;color:#94a3b8;font-size:11px;">· ${new Date(u.timestamp).toLocaleString('en-GB')}</span></div>
-                        <div style="color:#475569;margin-top:2px;">${u.text}</div>
-                    </div>
-                `).join('');
+                updatesContainer.innerHTML = task.statusUpdates.map(u => {
+                    const isSelf = u.authorId ? String(u.authorId) === String(currentUser._id) : false;
+                    const bubbleClass = isSelf ? 'sent' : 'received';
+                    const formattedTime = u.timestamp ? new Date(u.timestamp).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+                    return `
+                        <div class="task-chat-bubble ${bubbleClass}">
+                            ${!isSelf ? `<div class="task-chat-author">${u.authorName || 'User'}</div>` : ''}
+                            <div class="task-chat-text">${u.text || ''}</div>
+                            <div class="task-chat-time">${formattedTime}</div>
+                        </div>
+                    `;
+                }).join('');
+                setTimeout(() => { updatesContainer.scrollTop = updatesContainer.scrollHeight; }, 100);
             } else {
-                updatesContainer.innerHTML = '<div style="font-size:12px;color:#94a3b8;font-style:italic;padding:4px 0;">No updates recorded yet.</div>';
+                updatesContainer.innerHTML = '<div style="font-size:12px;color:#94A3B8;font-style:italic;text-align:center;padding:12px 0;">No messages yet. Send a message below to start chatting.</div>';
             }
         }
 
@@ -4221,6 +4228,61 @@ async function editTask(id) {
 
 function closeEditTaskModal() {
     document.getElementById('editTaskModal').classList.remove('active');
+}
+
+async function sendTaskChatMessage() {
+    const taskId = document.getElementById('editTaskId').value;
+    const input = document.getElementById('editTaskStatusUpdateText');
+    if (!taskId || !input || !input.value.trim()) return;
+
+    const text = input.value.trim();
+    input.value = '';
+
+    try {
+        const response = await fetch(`${API_BASE}/tasks/${taskId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ text })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to send message');
+
+        // Append to chat container immediately
+        const updatesContainer = document.getElementById('editTaskStatusUpdatesDisplay');
+        if (updatesContainer) {
+            const emptyEl = updatesContainer.querySelector('div[style*="italic"]');
+            if (emptyEl) updatesContainer.innerHTML = '';
+            
+            const formattedTime = new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+            
+            const chatBubble = document.createElement('div');
+            chatBubble.className = 'task-chat-bubble sent';
+            chatBubble.innerHTML = `
+                <div class="task-chat-text">${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+                <div class="task-chat-time">${formattedTime}</div>
+            `;
+            updatesContainer.appendChild(chatBubble);
+            updatesContainer.scrollTop = updatesContainer.scrollHeight;
+        }
+
+        showNotification('Message sent', 'success');
+
+        if (currentSection === 'tasks') loadTasks();
+        else if (currentSection === 'dashboard') loadDashboardData();
+        else if (currentSection === 'leads') loadLeads();
+    } catch (error) {
+        showNotification('Error sending message: ' + error.message, 'error');
+    }
+}
+
+function handleTaskChatKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendTaskChatMessage();
+    }
 }
 
 async function handleEditTask(e) {
@@ -4791,7 +4853,7 @@ async function markNotificationRead(notificationId, type, refId) {
             setTimeout(() => { if (typeof viewInvoice === 'function') viewInvoice(refId); }, 300);
         } else if (type && (type.startsWith('task_') || type === 'comment') && refId) {
             showSection('tasks');
-            setTimeout(() => { if (typeof viewTask === 'function') viewTask(refId); }, 300);
+            setTimeout(() => { if (typeof editTask === 'function') editTask(refId); }, 300);
         } else if (type && (type === 'status_change' || type === 'assignment' || type === 'reassignment') && refId) {
             showSection('leads');
             setTimeout(() => { if (typeof viewLead === 'function') viewLead(refId); }, 300);

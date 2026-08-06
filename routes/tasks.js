@@ -214,7 +214,8 @@ router.post('/', async (req, res) => {
         if (req.body.statusDetails && req.body.statusDetails.trim() !== '') {
             task.statusUpdates.push({
                 text: req.body.statusDetails.trim(),
-                authorName: req.user.fullName || req.user.email || 'Unknown',
+                authorName: req.user.fullName || req.user.username || req.user.email || 'Unknown',
+                authorId: req.user._id,
                 timestamp: new Date()
             });
         }
@@ -312,34 +313,22 @@ router.put('/:id', async (req, res) => {
         if (notes !== undefined) task.notes = notes;
 
         if (newStatusUpdate && newStatusUpdate.trim() !== '') {
+            const authorName = req.user.fullName || req.user.username || req.user.email || 'Unknown';
             task.statusUpdates.push({
                 text: newStatusUpdate.trim(),
-                authorName: req.user.fullName || req.user.email || 'Unknown',
+                authorName: authorName,
+                authorId: req.user._id,
                 timestamp: new Date()
             });
 
-            // Notify the other party about the comment
-            const Notification = require('../models/Notification');
-            const updaterId = req.user._id.toString();
-            const creatorId = task.user ? task.user.toString() : null;
-            const assigneeId = task.assignedTo ? task.assignedTo.toString() : null;
-
-            let notifyUserId = null;
-            if (updaterId === creatorId && assigneeId && assigneeId !== creatorId) {
-                notifyUserId = assigneeId;
-            } else if (updaterId === assigneeId && creatorId && creatorId !== assigneeId) {
-                notifyUserId = creatorId;
-            }
-
-            if (notifyUserId) {
-                await Notification.create({
-                    recipient: notifyUserId,
-                    sender: req.user._id,
-                    task: task._id,
-                    type: 'comment',
-                    message: `New message on task "${task.action || 'Task'}"`
-                });
-            }
+            // Notify assigner & assignee via task hierarchy notification
+            const { notifyTaskHierarchy } = require('../utils/notifications');
+            await notifyTaskHierarchy(
+                task,
+                'comment',
+                `💬 ${authorName}: "${newStatusUpdate.trim()}"`,
+                req.user._id
+            );
         }
 
         await task.save();
@@ -374,6 +363,48 @@ router.put('/:id', async (req, res) => {
     } catch (error) {
         console.error('Error updating task:', error);
         res.status(500).json({ message: 'Error updating task', error: error.message });
+    }
+});
+
+// Add a comment / chat message to task
+router.post('/:id/comments', async (req, res) => {
+    try {
+        const { text } = req.body;
+        if (!text || !text.trim()) {
+            return res.status(400).json({ message: 'Message text is required' });
+        }
+
+        const task = await Task.findById(req.params.id);
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found' });
+        }
+
+        const authorName = req.user.fullName || req.user.username || req.user.email || 'Unknown';
+        task.statusUpdates.push({
+            text: text.trim(),
+            authorName: authorName,
+            authorId: req.user._id,
+            timestamp: new Date()
+        });
+
+        await task.save();
+
+        const { notifyTaskHierarchy } = require('../utils/notifications');
+        await notifyTaskHierarchy(
+            task,
+            'comment',
+            `💬 ${authorName}: "${text.trim()}"`,
+            req.user._id
+        );
+
+        const updatedTask = await Task.findById(task._id)
+            .populate('lead', 'companyName contactPerson')
+            .populate('assignedTo', 'username email fullName');
+
+        res.json(updatedTask);
+    } catch (error) {
+        console.error('Error adding task comment:', error);
+        res.status(500).json({ message: 'Error adding comment', error: error.message });
     }
 });
 
