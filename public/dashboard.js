@@ -1139,6 +1139,36 @@ function renderLeadsTable() {
         const leadNumber = lead.serialNumber || (startIndex + index + 1);
         const leadDate = lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('en-GB') : 'N/A';
 
+        // Latest Task cell
+        let lastTaskHtml = '<span style="color:#9CA3AF;">—</span>';
+        if (lead.latestTask) {
+            const t = lead.latestTask;
+            const taskAction = (t.action || '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const taskStatus = t.status || 'pending';
+            const taskUpdated = t.updatedAt ? new Date(t.updatedAt) : null;
+            let timeAgo = '';
+            if (taskUpdated) {
+                const diffMs = Date.now() - taskUpdated.getTime();
+                const diffMin = Math.floor(diffMs / 60000);
+                if (diffMin < 60) timeAgo = `${diffMin}m ago`;
+                else if (diffMin < 1440) timeAgo = `${Math.floor(diffMin / 60)}h ago`;
+                else timeAgo = `${Math.floor(diffMin / 1440)}d ago`;
+            }
+            const taskStatusColors = { pending: '#F59E0B', 'in-progress': '#3B82F6', completed: '#10B981', cancelled: '#EF4444' };
+            const taskColor = taskStatusColors[taskStatus] || '#6B7280';
+            const taskDetail = t.remarks || t.statusDetails || '';
+            lastTaskHtml = `
+                <div style="display:flex;flex-direction:column;gap:2px;min-width:120px;">
+                    <span style="font-size:12px;font-weight:600;color:#1E293B;">${taskAction}</span>
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <span style="width:6px;height:6px;border-radius:50%;background:${taskColor};display:inline-block;flex-shrink:0;"></span>
+                        <span style="font-size:11px;color:${taskColor};font-weight:500;">${taskStatus}</span>
+                        ${timeAgo ? `<span style="font-size:11px;color:#94A3B8;">· ${timeAgo}</span>` : ''}
+                    </div>
+                    ${taskDetail ? `<span style="font-size:11px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;" title="${taskDetail}">${taskDetail}</span>` : ''}
+                </div>`;
+        }
+
         return `
             <tr class="clickable-row" onclick="handleLeadRowClick(event, '${lead._id}')">
                 <td>${leadNumber}</td>
@@ -1155,6 +1185,7 @@ function renderLeadsTable() {
                 <td>${displayMobile || '<span style="color:#9CA3AF;">N/A</span>'}</td>
                 <td>${assignedUser}</td>
                 <td><span class="status-pill ${statusClass}">${lead.status || 'New'}</span></td>
+                <td>${lastTaskHtml}</td>
                 <td>
                     <div class="modern-actions">
                         ${!isStaff ? `<button class="btn-icon" onclick="event.stopPropagation(); editLead('${lead._id}')" title="Edit"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>` : ''}

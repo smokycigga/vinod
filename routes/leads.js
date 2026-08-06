@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Lead = require('../models/Lead');
+const Task = require('../models/Task');
 const ActivityLog = require('../models/ActivityLog');
 const auth = require('../middleware/auth');
 const { isLeadClient, normalizeLeadClientFields } = require('../utils/leadClient');
@@ -220,7 +221,25 @@ router.get('/', async (req, res) => {
             .sort({ createdAt: -1 });
 
         console.log(`[DEBUG] Successfully fetched ${leads.length} leads`);
-        res.json(leads);
+
+        // Attach the latest task for each lead (sorted by updatedAt desc)
+        const leadIds = leads.map(l => l._id);
+        const latestTasks = await Task.aggregate([
+            { $match: { lead: { $in: leadIds } } },
+            { $sort: { updatedAt: -1 } },
+            { $group: { _id: '$lead', action: { $first: '$action' }, status: { $first: '$status' }, statusDetails: { $first: '$statusDetails' }, remarks: { $first: '$remarks' }, updatedAt: { $first: '$updatedAt' }, dueDate: { $first: '$dueDate' } } }
+        ]);
+
+        const taskMap = {};
+        latestTasks.forEach(t => { taskMap[t._id.toString()] = t; });
+
+        const leadsWithTasks = leads.map(lead => {
+            const obj = lead.toObject();
+            obj.latestTask = taskMap[lead._id.toString()] || null;
+            return obj;
+        });
+
+        res.json(leadsWithTasks);
     } catch (error) {
         console.error('[CRITICAL] Error fetching leads:', error);
         res.status(500).json({ 
