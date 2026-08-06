@@ -122,14 +122,32 @@ body {
   left: 0;
   top: 64px;
   height: calc(100vh - 64px);
-  width: 280px;
+  width: var(--sidebar-width, 280px);
   background: #F4EDE0;
   border-right: 1px solid #DDD0BB;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.1s linear;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+}
+
+.sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  bottom: 0;
+  width: 7px;
+  cursor: ew-resize;
+  z-index: 1010;
+  background: transparent;
+  transition: background 0.15s;
+  touch-action: none;
+}
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle.active {
+  background: #3B82F6;
+  opacity: 0.8;
 }
 
 /* Collapsed State */
@@ -3135,8 +3153,8 @@ hr {
 .main-content.top-nav-layout {
   margin-top: 64px;
   /* Below fixed header */
-  margin-left: 280px !important;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: var(--sidebar-width, 280px) !important;
+  transition: margin-left 0.1s linear;
 }
 
 .sidebar.collapsed~.main-content.top-nav-layout.collapsed {

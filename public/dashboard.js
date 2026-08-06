@@ -999,7 +999,64 @@ function updateSortHeaderIcons() {
     });
 }
 
+// Sidebar Resizing Logic
+function initSidebarResize() {
+    const STORAGE_KEY = 'custom_sidebar_width';
+    const sidebar = document.getElementById('sidebar');
+    const handle = document.getElementById('sidebarResizeHandle');
+    const mainContent = document.querySelector('.main-content');
+    if (!sidebar || !handle) return;
+
+    // Apply saved width on startup
+    const savedWidth = localStorage.getItem(STORAGE_KEY);
+    if (savedWidth) {
+        const w = Math.max(130, Math.min(500, parseInt(savedWidth, 10)));
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+        sidebar.style.width = w + 'px';
+        if (mainContent && window.innerWidth > 768) {
+            mainContent.style.marginLeft = w + 'px';
+        }
+    }
+
+    let startX, startWidth;
+
+    handle.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        startX = e.clientX;
+        startWidth = sidebar.offsetWidth;
+
+        document.body.style.cursor = 'ew-resize';
+        document.body.style.userSelect = 'none';
+        handle.classList.add('active');
+
+        function onMouseMove(e) {
+            const diff = e.clientX - startX;
+            const newWidth = Math.max(130, Math.min(500, startWidth + diff));
+            document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
+            sidebar.style.width = newWidth + 'px';
+            if (mainContent && window.innerWidth > 768) {
+                mainContent.style.marginLeft = newWidth + 'px';
+            }
+            localStorage.setItem(STORAGE_KEY, newWidth);
+        }
+
+        function onMouseUp() {
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            handle.classList.remove('active');
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    initSidebarResize();
     const leadSearch = document.getElementById('leadSearchInput');
     if (leadSearch) {
         leadSearch.addEventListener('input', (e) => {
