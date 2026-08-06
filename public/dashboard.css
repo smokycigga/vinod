@@ -263,11 +263,13 @@ body {
   color: #C9963A;
 }
 
-/* Hide Text When Collapsed */
-.sidebar.collapsed .nav-text {
+/* Hide Text When Collapsed or Compact */
+.sidebar.collapsed .nav-text,
+.sidebar.compact .nav-text,
+.sidebar.compact .btn-logout span {
   opacity: 0;
   width: 0;
-  display: none;
+  display: none !important;
 }
 
 .sidebar.collapsed:hover .nav-text {
@@ -277,10 +279,41 @@ body {
   margin-left: 12px;
 }
 
-/* Center Icons When Collapsed */
-.sidebar.collapsed .nav-item {
-  justify-content: center;
-  padding: 12px;
+/* Center Icons When Collapsed or Compact */
+.sidebar.collapsed .nav-item,
+.sidebar.compact .nav-item {
+  justify-content: center !important;
+  padding: 12px 0 !important;
+}
+
+.sidebar.compact .sidebar-footer {
+  padding: 12px 6px !important;
+}
+
+.sidebar.compact .btn-logout {
+  justify-content: center !important;
+  padding: 10px 0 !important;
+  width: 100% !important;
+}
+
+/* Tooltip on Hover in Compact Mode */
+.sidebar.compact .nav-item:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 10px;
+  padding: 6px 10px;
+  background: #1B2A4A;
+  color: #f5efe3;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 2000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
 }
 
 .sidebar.collapsed:hover .nav-item {

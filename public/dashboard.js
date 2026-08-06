@@ -1007,15 +1007,24 @@ function initSidebarResize() {
     const mainContent = document.querySelector('.main-content');
     if (!sidebar || !handle) return;
 
-    // Apply saved width on startup
-    const savedWidth = localStorage.getItem(STORAGE_KEY);
-    if (savedWidth) {
-        const w = Math.max(130, Math.min(500, parseInt(savedWidth, 10)));
+    function applyWidth(w) {
         document.documentElement.style.setProperty('--sidebar-width', w + 'px');
         sidebar.style.width = w + 'px';
         if (mainContent && window.innerWidth > 768) {
             mainContent.style.marginLeft = w + 'px';
         }
+        if (w < 140) {
+            sidebar.classList.add('compact');
+        } else {
+            sidebar.classList.remove('compact');
+        }
+    }
+
+    // Apply saved width on startup
+    const savedWidth = localStorage.getItem(STORAGE_KEY);
+    if (savedWidth) {
+        const w = Math.max(64, Math.min(500, parseInt(savedWidth, 10)));
+        applyWidth(w);
     }
 
     let startX, startWidth;
@@ -1033,12 +1042,8 @@ function initSidebarResize() {
 
         function onMouseMove(e) {
             const diff = e.clientX - startX;
-            const newWidth = Math.max(130, Math.min(500, startWidth + diff));
-            document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
-            sidebar.style.width = newWidth + 'px';
-            if (mainContent && window.innerWidth > 768) {
-                mainContent.style.marginLeft = newWidth + 'px';
-            }
+            const newWidth = Math.max(64, Math.min(500, startWidth + diff));
+            applyWidth(newWidth);
             localStorage.setItem(STORAGE_KEY, newWidth);
         }
 
