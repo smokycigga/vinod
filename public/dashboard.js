@@ -1160,7 +1160,7 @@ function renderLeadsTable() {
             const taskColor = taskStatusColors[taskStatus] || '#6B7280';
             const taskDetail = t.remarks || t.statusDetails || '';
             lastTaskHtml = `
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:110px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;min-width:0;overflow:hidden;">
                     <div style="display:flex;flex-direction:column;gap:2px;cursor:pointer;flex:1;overflow:hidden;" onclick="event.stopPropagation(); editTask('${taskId}')" title="Click to view & edit task details">
                         <span style="font-size:12px;font-weight:600;color:#1E293B;">${taskAction}</span>
                         <div style="display:flex;align-items:center;gap:4px;">
@@ -6027,7 +6027,7 @@ async function loadInvoices() {
 
         tbody.innerHTML = invoices.map(inv => {
             const custName = inv.customerSnapshot?.name || inv.customer?.name || '—';
-            const candCount = (inv.candidates || []).length;
+            const candidateNames = (inv.candidates || []).map(c => c.name).filter(Boolean).join(', ');
             const isSuperAdmin = currentUser?.role === 'superadmin';
             const isAdmin = currentUser?.role === 'admin';
             const canApprove = canApproveInvoice(inv);
@@ -6039,7 +6039,7 @@ async function loadInvoices() {
                 <td><strong>${inv.invoiceNumber}</strong></td>
                 <td>${fmtD(inv.invoiceDate)}</td>
                 <td>${custName}</td>
-                <td>${candCount ? candCount + ' candidate' + (candCount > 1 ? 's' : '') : '—'}</td>
+                <td title="${candidateNames}">${candidateNames || '—'}</td>
                 <td style="text-align:right;">${fmtINR(inv.chargeableAmount)}</td>
                 <td style="text-align:right;font-weight:600;">${fmtINR(displayTotal)}</td>
                 <td>${fmtD(inv.dueDate)}</td>

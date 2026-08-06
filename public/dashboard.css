@@ -5965,9 +5965,13 @@ h2,
 
 /* Data cells padding */
 #leadsTable tbody td {
-  padding: 7px 10px;
+  padding: 6px 6px;
   color: #1e293b;
   background: #fff;
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Row hover — Excel-style light blue highlight */

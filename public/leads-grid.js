@@ -1,6 +1,6 @@
 /**
  * Leads Excel-like Grid
- * - Resizable columns (drag the border handle)
+ * - Resizable columns (drag the border handle to make bigger or super thin down to 15px)
  * - Column width persistence via localStorage
  * - Excel-style cursor & visual feedback
  */
@@ -22,7 +22,10 @@
             // Apply saved width
             if (saved[i]) {
                 th.style.width = saved[i] + 'px';
-                th.style.minWidth = saved[i] + 'px';
+                th.style.maxWidth = saved[i] + 'px';
+                th.style.minWidth = '15px';
+            } else {
+                th.style.minWidth = '15px';
             }
 
             // Skip last column (Actions)
@@ -57,9 +60,10 @@
 
                 function onMouseMove(e) {
                     const diff = e.clientX - startX;
-                    const newWidth = Math.max(20, startWidth + diff);
+                    const newWidth = Math.max(15, startWidth + diff);
                     th.style.width = newWidth + 'px';
-                    th.style.minWidth = newWidth + 'px';
+                    th.style.maxWidth = newWidth + 'px';
+                    th.style.minWidth = '15px';
 
                     // Save to localStorage
                     const widths = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -89,7 +93,8 @@
         if (!table) return;
         table.querySelectorAll('thead th').forEach(th => {
             th.style.width = '';
-            th.style.minWidth = '';
+            th.style.maxWidth = '';
+            th.style.minWidth = '15px';
         });
     };
 
