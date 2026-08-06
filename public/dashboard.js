@@ -4162,43 +4162,55 @@ async function editTask(id) {
         document.getElementById('editTaskAction').value = task.action || '';
         document.getElementById('editTaskRemarks').value = task.remarks || '';
         document.getElementById('editTaskDueDate').value = task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : '';
-        document.getElementById('editTaskStatus').value = task.status;
+        document.getElementById('editTaskStatus').value = task.status || 'pending';
         document.getElementById('editTaskAssignedTo').value = task.assignedTo?._id || task.assignedTo || '';
         document.getElementById('editTaskNotes').value = task.notes || '';
 
-        // Check if current user is the task creator
+        // Display status updates / communication history
+        const updatesContainer = document.getElementById('editTaskStatusUpdatesDisplay');
+        if (updatesContainer) {
+            if (task.statusUpdates && task.statusUpdates.length > 0) {
+                updatesContainer.innerHTML = task.statusUpdates.map(u => `
+                    <div class="status-update-item" style="padding:6px 10px;margin-bottom:6px;background:#f8fafc;border-left:3px solid #3b82f6;border-radius:4px;font-size:12px;">
+                        <div style="font-weight:600;color:#1e293b;">${u.authorName || 'User'} <span style="font-weight:400;color:#94a3b8;font-size:11px;">· ${new Date(u.timestamp).toLocaleString('en-GB')}</span></div>
+                        <div style="color:#475569;margin-top:2px;">${u.text}</div>
+                    </div>
+                `).join('');
+            } else {
+                updatesContainer.innerHTML = '<div style="font-size:12px;color:#94a3b8;font-style:italic;padding:4px 0;">No updates recorded yet.</div>';
+            }
+        }
+
+        // Reset new update textarea
+        const newUpdateEl = document.querySelector('#editTaskForm textarea[name="newStatusUpdate"]');
+        if (newUpdateEl) newUpdateEl.value = '';
+
+        // Permissions check
+        const isSuperAdminOrAdmin = ['superadmin', 'admin', 'manager'].includes(currentUser?.role);
         const isCreator = task.user?._id === currentUser._id || task.user === currentUser._id;
         const isAssigned = task.assignedTo?._id === currentUser._id || task.assignedTo === currentUser._id;
 
-        // If not creator (but maybe assigned), disable date and assigned fields
-        if (!isCreator && isAssigned) {
-            document.getElementById('editTaskDueDate').disabled = true;
-            document.getElementById('editTaskAssignedTo').disabled = true;
-            document.getElementById('editTaskAction').disabled = true;
-            document.getElementById('editTaskRemarks').disabled = true;
-            document.getElementById('editTaskStatus').disabled = true;
+        const canEdit = isCreator || isAssigned || isSuperAdminOrAdmin;
 
-            // Only allow editing notes
-            document.getElementById('editTaskNotes').disabled = false;
-
-            // Show a message
-            showNotification('You can only add notes. Contact task creator to edit date/time', 'info');
-        } else if (isCreator) {
-            // Creator can edit everything
-            document.getElementById('editTaskDueDate').disabled = false;
-            document.getElementById('editTaskAssignedTo').disabled = false;
+        if (canEdit) {
             document.getElementById('editTaskAction').disabled = false;
             document.getElementById('editTaskRemarks').disabled = false;
             document.getElementById('editTaskStatus').disabled = false;
             document.getElementById('editTaskNotes').disabled = false;
+
+            // Only creator or admin/manager can change due date and reassign
+            const canManage = isCreator || isSuperAdminOrAdmin;
+            document.getElementById('editTaskDueDate').disabled = !canManage;
+            document.getElementById('editTaskAssignedTo').disabled = !canManage;
         } else {
-            // Not creator and not assigned - read-only
+            // Read-only for non-assigned/non-admin users
             document.getElementById('editTaskDueDate').disabled = true;
             document.getElementById('editTaskAssignedTo').disabled = true;
             document.getElementById('editTaskAction').disabled = true;
             document.getElementById('editTaskRemarks').disabled = true;
             document.getElementById('editTaskStatus').disabled = true;
             document.getElementById('editTaskNotes').disabled = true;
+            showNotification('Read-only view. You are not assigned to this task.', 'info');
         }
 
         document.getElementById('editTaskModal').classList.add('active');
@@ -4216,88 +4228,38 @@ async function handleEditTask(e) {
     const taskId = document.getElementById('editTaskId').value;
     const formData = new FormData(e.target);
 
-    // Fetch the original task to check creator
-    const taskResponse = await fetch(`${API_BASE}/tasks/${taskId}`, {
-        headers: { 'Authorization': `Bearer ${authToken}` }
-    });
-    const originalTask = await taskResponse.json();
-
-    const isCreator = originalTask.user?._id === currentUser._id || originalTask.user === currentUser._id;
-    const isAssigned = originalTask.assignedTo?._id === currentUser._id || originalTask.assignedTo === currentUser._id;
-
-    // If user is assigned but not creator, only allow notes update
-    if (!isCreator && isAssigned) {
-        const taskData = {
-            notes: formData.get('notes')
-        };
-
-        try {
-            const response = await fetch(`${API_BASE}/tasks/${taskId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                },
-                body: JSON.stringify(taskData)
-            });
-
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'Failed to update task notes');
-
-            showNotification('Notes updated successfully', 'success');
-            closeEditTaskModal();
-
-            if (currentSection === 'tasks') loadTasks();
-            else if (currentSection === 'dashboard') loadDashboardData();
-            else if (currentSection === 'leads') loadLeads();
-        } catch (error) {
-            showNotification('Error updating notes: ' + error.message, 'error');
-        }
-        return;
+    const taskData = {};
+    if (formData.get('action')) taskData.action = formData.get('action');
+    if (formData.get('remarks') !== null) taskData.remarks = formData.get('remarks');
+    if (formData.get('dueDate')) taskData.dueDate = formData.get('dueDate');
+    if (formData.get('status')) taskData.status = formData.get('status');
+    if (formData.get('assignedTo')) taskData.assignedTo = formData.get('assignedTo');
+    if (formData.get('notes') !== null) taskData.notes = formData.get('notes');
+    if (formData.get('newStatusUpdate') && formData.get('newStatusUpdate').trim()) {
+        taskData.newStatusUpdate = formData.get('newStatusUpdate').trim();
     }
 
-    // If creator, allow full update
-    if (isCreator) {
-        const assignedToValue = formData.get('assignedTo');
+    try {
+        const response = await fetch(`${API_BASE}/tasks/${taskId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(taskData)
+        });
 
-        if (!assignedToValue) {
-            showNotification('Please select a user to assign the task', 'error');
-            return;
-        }
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to update task');
 
-        const taskData = {
-            action: formData.get('action'),
-            remarks: formData.get('remarks'),
-            dueDate: formData.get('dueDate'),
-            status: formData.get('status'),
-            assignedTo: assignedToValue,
-            notes: formData.get('notes')
-        };
+        showNotification('Task updated successfully', 'success');
+        closeEditTaskModal();
 
-        try {
-            const response = await fetch(`${API_BASE}/tasks/${taskId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                },
-                body: JSON.stringify(taskData)
-            });
-
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'Failed to update task');
-
-            showNotification('Task updated successfully', 'success');
-            closeEditTaskModal();
-
-            if (currentSection === 'tasks') loadTasks();
-            else if (currentSection === 'dashboard') loadDashboardData();
-            else if (currentSection === 'leads') loadLeads();
-        } catch (error) {
-            showNotification('Error updating task: ' + error.message, 'error');
-        }
-    } else {
-        showNotification('You do not have permission to edit this task', 'error');
+        if (currentSection === 'tasks') loadTasks();
+        else if (currentSection === 'dashboard') loadDashboardData();
+        else if (currentSection === 'leads') loadLeads();
+    } catch (error) {
+        showNotification('Error updating task: ' + error.message, 'error');
     }
 }
 
