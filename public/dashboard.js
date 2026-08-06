@@ -1159,6 +1159,7 @@ function renderLeadsTable() {
                     <div class="modern-actions">
                         ${!isStaff ? `<button class="btn-icon" onclick="event.stopPropagation(); editLead('${lead._id}')" title="Edit"><ion-icon name="create-outline" class="icon-sm"></ion-icon></button>` : ''}
                         ${!isLeadClient(lead) ? `<button class="btn-icon briefcase" onclick="event.stopPropagation(); convertToClient('${lead._id}', '${lead.companyName}')" title="Send to Client"><ion-icon name="briefcase-outline" class="icon-sm"></ion-icon></button>` : ''}
+                        <button class="btn-icon task" onclick="event.stopPropagation(); openAddTaskForLead('${lead._id}', '${(lead.companyName || '').replace(/'/g, "\\'")}'  )" title="Create Task for this Lead"><ion-icon name="checkbox-outline" class="icon-sm"></ion-icon></button>
                         ${['admin', 'superadmin', 'manager'].includes(currentUser?.role) && canDeleteModule('leads') ?
                 `<button class="btn-icon delete" onclick="event.stopPropagation(); deleteLead('${lead._id}')" title="Delete"><ion-icon name="trash-outline" class="icon-sm"></ion-icon></button>` : ''}
                     </div>
@@ -2934,6 +2935,22 @@ function openAddTaskModal() {
     document.getElementById('addTaskForm').reset();
     loadTaskTeamMembers();
     loadTaskLeads();
+}
+
+// Open Add Task modal pre-filled with a specific lead (called from Leads table action button)
+async function openAddTaskForLead(leadId, leadName) {
+    document.getElementById('addTaskModal').classList.add('active');
+    document.getElementById('addTaskForm').reset();
+    await loadTaskTeamMembers();
+    await loadTaskLeads();
+
+    // Pre-select the lead in the dropdown
+    const leadSelect = document.getElementById('taskLead');
+    if (leadSelect) {
+        leadSelect.value = leadId;
+        // Trigger change event so assignedTo auto-populates from the lead's assigned user
+        leadSelect.dispatchEvent(new Event('change'));
+    }
 }
 
 function closeAddTaskModal() {

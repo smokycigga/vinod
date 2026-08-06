@@ -3908,6 +3908,11 @@ hr {
   color: #10b981;
 }
 
+.btn-icon.task:hover {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
 /* Empty State */
 .empty-state {
   display: flex;
